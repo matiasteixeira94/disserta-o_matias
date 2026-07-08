@@ -2,7 +2,7 @@
 function setView(view){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.getElementById('view-'+view).classList.add('active');
-  document.querySelectorAll('.nav-item').forEach(b=>b.classList.toggle('active', b.dataset.view===view));
+  document.querySelectorAll('.nav-item, .hero-nav-btn').forEach(b=>b.classList.toggle('active', b.dataset.view===view));
   const titles = {inicio:'Tela Inicial', dashboard:'Dashboard', mapa:'Mapa', relatorios:'Relatórios', comparacoes:'Comparações'};
   document.getElementById('pageTitle').textContent = titles[view] || '';
   closeMobileMenu();
@@ -13,6 +13,12 @@ function setView(view){
 
 document.getElementById('nav').addEventListener('click', (e)=>{
   const btn = e.target.closest('.nav-item');
+  if(!btn || btn.classList.contains('disabled')) return;
+  setView(btn.dataset.view);
+});
+
+document.getElementById('heroNav').addEventListener('click', (e)=>{
+  const btn = e.target.closest('.hero-nav-btn');
   if(!btn || btn.classList.contains('disabled')) return;
   setView(btn.dataset.view);
 });

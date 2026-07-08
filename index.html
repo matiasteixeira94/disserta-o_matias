@@ -66,6 +66,34 @@
 
     <!-- ===================== TELA INICIAL ===================== -->
     <section id="view-inicio" class="view active">
+      <div class="hero-inicio">
+        <div class="hero-logo-wrap">
+          <img src="assets/images/sanedata-logo.svg" alt="SaneData — inteligência em saneamento" class="hero-logo">
+        </div>
+        <nav class="hero-nav" id="heroNav">
+          <button class="hero-nav-btn active" data-view="inicio">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v9h14v-9"/></svg>
+            Tela Inicial
+          </button>
+          <button class="hero-nav-btn" data-view="dashboard">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="5" rx="1.5"/><rect x="13" y="10" width="8" height="11" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/></svg>
+            Dashboard
+          </button>
+          <button class="hero-nav-btn" data-view="mapa">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 4 3 6.5v14L9 18l6 2.5 6-2.5v-14L15 6.5 9 4Z"/><path d="M9 4v14M15 6.5v14"/></svg>
+            Mapa
+          </button>
+          <button class="hero-nav-btn disabled" data-view="relatorios">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3h9l5 5v13H6z"/><path d="M9 12h6M9 16h6M9 8h2"/></svg>
+            Relatórios <span class="soon">em breve</span>
+          </button>
+          <button class="hero-nav-btn disabled" data-view="comparacoes">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10M10 20V4M16 20v-7M22 20V13"/></svg>
+            Comparações <span class="soon">em breve</span>
+          </button>
+        </nav>
+      </div>
+
       <div class="filter-bar">
         <div class="field">
           <label for="selMunicipio">Município</label>
