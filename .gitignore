@@ -1,0 +1,16 @@
+# cache/downloads do pipeline de dados (regenerável via data/scripts/run_pipeline.py)
+data/raw/**
+!data/raw/README.md
+!data/raw/*/
+data/scripts/__pycache__/
+data/scripts/lib/__pycache__/
+
+# dependências locais
+node_modules/
+
+# arquivos temporários de SO/editor
+.DS_Store
+Thumbs.db
+
+# configurações locais do Claude Code
+.claude/

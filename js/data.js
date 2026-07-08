@@ -1,0 +1,54 @@
+/* =========================================================================
+   DADOS — carregados em tempo de execução a partir de data/processed/painel_pe.json,
+   gerado pelo pipeline em data/scripts/ (fontes oficiais: IBGE, SINAN/SIH-SUS,
+   SINISA/SNIS — ver data/scripts/README.md). Este arquivo não contém nenhum
+   valor de indicador embutido: se o JSON não existir ou algum campo não
+   tiver sido apurado ainda, o dado aparece como ausente na interface, nunca
+   como um número inventado.
+   ========================================================================= */
+const INDICADORES_DEFICIT = ["deficitAgua","deficitEsgoto","deficitResiduos"];
+const INDICADORES_SAUDE   = ["taxaDengue","taxaChikungunya","taxaDiarreia"];
+const TODOS_INDICADORES   = [...INDICADORES_DEFICIT, ...INDICADORES_SAUDE];
+
+const LABELS = {
+  deficitAgua:"Déficit de água", deficitEsgoto:"Déficit de esgoto", deficitResiduos:"Déficit de resíduos",
+  taxaDengue:"Dengue", taxaChikungunya:"Chikungunya", taxaDiarreia:"Diarreia aguda"
+};
+
+let PAINEL = null; // payload bruto de data/processed/painel_pe.json
+let state = { ano:null, indicador:"taxaDengue", componente:"deficitAgua", municipioIdx:0, peso:"igual" };
+
+/* ============ CARREGAMENTO DOS DADOS REAIS ============ */
+async function carregarPainel(){
+  const resp = await fetch('data/processed/painel_pe.json', { cache:'no-store' });
+  if(!resp.ok) throw new Error(`HTTP ${resp.status} ao buscar data/processed/painel_pe.json`);
+  PAINEL = await resp.json();
+  state.ano = String(PAINEL.anoFim);
+}
+
+function anosDisponiveis(){
+  if(!PAINEL) return [];
+  const anos = [];
+  for(let a = PAINEL.anoFim; a >= PAINEL.anoInicio; a--) anos.push(String(a));
+  return anos;
+}
+
+/* município x ano -> objeto plano usado pelas telas (nomes de campo iguais aos do protótipo original) */
+function getDataset(ano){
+  if(!PAINEL) return [];
+  return PAINEL.municipios
+    .filter(m => String(m.ano) === String(ano))
+    .map(m => ({
+      nome: m.municipio, uf: m.uf, pop: m.populacao,
+      deficitAgua: m.deficitAgua, deficitEsgoto: m.deficitEsgoto, deficitResiduos: m.deficitResiduos,
+      taxaDengue: m.taxaDengue, taxaChikungunya: m.taxaChikungunya, taxaDiarreia: m.taxaDiarreia,
+    }))
+    .sort((a,b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+}
+
+/* mantém só os municípios com valor real (não nulo) nas chaves pedidas */
+function comDadosCompletos(data, chaves){
+  return data.filter(m => chaves.every(k => m[k] !== null && m[k] !== undefined && !Number.isNaN(m[k])));
+}
+
+function round1(n){ return Math.round(n*10)/10; }
