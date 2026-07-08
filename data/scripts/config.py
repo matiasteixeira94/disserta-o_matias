@@ -1,6 +1,6 @@
 """
-Configuração central do pipeline de dados do Painel de Priorização —
-Saneamento & Saúde Pública (PPGECAM).
+Configuração central do pipeline de dados do SaneData — Painel de
+Priorização em Saneamento & Saúde Pública (PPGECAM).
 
 Alterar os valores abaixo é o único passo necessário para mudar o recorte
 geográfico/temporal do painel em uma atualização futura — todos os scripts

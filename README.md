@@ -1,4 +1,4 @@
-# Painel de Priorização — Saneamento & Saúde Pública
+# SaneData — Painel de Priorização em Saneamento & Saúde Pública
 
 Painel interativo para priorização de investimentos em saneamento e saúde pública nos municípios de Pernambuco, desenvolvido no âmbito do PPGECAM.
 
