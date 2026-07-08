@@ -14,8 +14,12 @@ de novo para regenerar). Arquivos:
   usados pelo script 05 para diferenciar "zero casos" (ano coberto, sem
   notificação) de "sem dado ainda" (ano não baixado) — nunca inventam um
   valor, só evitam confundir os dois casos.
-- `saneamento_pe.csv` — déficit de água/esgoto/resíduos por município/ano
-  (04 — só existe depois do passo manual de importação do SINISA/SNIS).
+- `saneamento_pe.csv` — déficit de água/esgoto/resíduos por município/ano.
+  `deficitAgua`/`deficitEsgoto` 2015-2022 vêm da Base dos Dados via BigQuery
+  (04a, automatizado); `deficitResiduos` e os anos 2023-2024 de água/esgoto
+  só existem depois do passo manual de importação do SINISA (04) — até lá
+  ficam `null`. Os dois scripts fazem merge entre si (nenhum sobrescreve o
+  que o outro já preencheu).
 - **`painel_pe.json`** — junção final de tudo acima (05); é o único
   arquivo que o front-end (`js/data.js`) lê, via `fetch`. Campos ainda não
   apurados aparecem como `null`, nunca como um valor fictício.

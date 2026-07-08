@@ -11,9 +11,12 @@ dados abertos do Ministério das Cidades) antes de decidir por este desenho.
 
 Por isso este é o único elo do pipeline com um passo manual:
 
-  1. Acesse a Série Histórica do SNIS/SINISA:
-     https://app4.mdr.gov.br/serieHistorica/
-     (ou o painel mais novo: https://indicadores-sinisa-2025.cidades.gov.br/)
+  1. Acesse o Painel de Indicadores do SINISA:
+     https://indicadores-sinisa-2025.cidades.gov.br/
+     (a antiga Série Histórica em app4.mdr.gov.br saiu do ar — domínio não
+     resolve mais, verificado em 2026-07-08; se voltar, é uma alternativa)
+     Para água/esgoto 2015-2022 também há um atalho automatizado, ver
+     04a_sinisa_basedosdados.py.
   2. Filtre por Estado = Pernambuco (todos os municípios) e pelos anos de
      referência configurados em config.ANO_INICIO..ANO_FIM.
   3. Exporte/baixe a planilha (CSV ou XLSX) com os indicadores de:
@@ -42,7 +45,7 @@ import unicodedata
 
 import pandas as pd
 
-from config import ANO_FIM, ANO_INICIO, PROCESSED_DIR, RAW_SINISA_DIR
+from config import ANO_FIM, ANO_INICIO, INDICADORES_DEFICIT, PROCESSED_DIR, RAW_SINISA_DIR
 
 CAMPOS_COBERTURA = {
     "deficitAgua": {
@@ -139,7 +142,26 @@ def processar(df: pd.DataFrame) -> pd.DataFrame:
 def main():
     df_bruto = carregar_planilhas()
     saida = processar(df_bruto)
+
     out_path = PROCESSED_DIR / "saneamento_pe.csv"
+    if out_path.exists():
+        # não sobrescreve cegamente: preserva linhas/colunas já existentes
+        # (ex.: deficitAgua/deficitEsgoto trazidos por 04a_sinisa_basedosdados.py)
+        # e só substitui, para cada (codigo_ibge, ano) em comum, os campos
+        # que este export manual realmente trouxe.
+        existente = pd.read_csv(out_path)
+        combinado = existente.merge(saida, on=["codigo_ibge", "ano"], how="outer", suffixes=("", "_novo"))
+        for col in INDICADORES_DEFICIT:
+            col_novo = f"{col}_novo"
+            if col_novo in combinado.columns:
+                combinado[col] = combinado[col_novo].where(combinado[col_novo].notna(), combinado.get(col))
+                combinado = combinado.drop(columns=[col_novo])
+        saida = combinado
+
+    for col in ("codigo_ibge", "ano", *INDICADORES_DEFICIT):
+        if col not in saida.columns:
+            saida[col] = pd.NA
+    saida = saida[["codigo_ibge", "ano", *INDICADORES_DEFICIT]].sort_values(["codigo_ibge", "ano"])
     saida.to_csv(out_path, index=False, encoding="utf-8")
     print(f"OK: {out_path} ({len(saida)} linhas)")
 

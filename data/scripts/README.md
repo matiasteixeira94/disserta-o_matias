@@ -1,4 +1,4 @@
-# data/scripts — pipeline de dados (Painel de Priorização — Saneamento & Saúde Pública)
+# data/scripts — pipeline de dados (SaneData — Painel de Priorização em Saneamento & Saúde Pública)
 
 Pipeline em Python que importa, trata e padroniza dados **oficiais** de
 IBGE, DATASUS (SINAN e SIH-SUS) e SINISA/SNIS para os municípios de
@@ -22,6 +22,7 @@ python 01_ibge_municipios.py     # municípios + população (IBGE)
 python 02_sinan_saude.py         # dengue e chikungunya (SINAN/DATASUS)
 python 03_sih_diarreia.py        # internações por diarreia aguda (SIH-SUS)
 python 04_sinisa_saneamento.py   # déficit de saneamento (SINISA/SNIS) — passo manual, ver abaixo
+python 04a_sinisa_basedosdados.py --billing-project SEU_PROJETO_GCP  # água/esgoto 2015-2022, automatizado — ver abaixo
 python 05_build_painel.py        # junta tudo em data/processed/painel_pe.json
 python 06_ibge_malha_municipios.py  # polígonos dos municípios, para o mapa
 ```
@@ -89,14 +90,20 @@ diretamente antes de decidir o desenho deste script:
 - o portal de dados abertos do Ministério das Cidades
   (`dadosabertos.cidades.gov.br`) só aponta para o aplicativo web de
   consulta, sem recurso CSV/JSON direto;
-- o aplicativo de Série Histórica (`app4.mdr.gov.br/serieHistorica`) e o
-  novo Painel de Indicadores SINISA são só interface de formulário, sem
-  endpoint JSON documentado (verificado inspecionando o bundle JS do
-  painel em busca de chamadas a `/api/...`).
+- o antigo aplicativo de Série Histórica (`app4.mdr.gov.br/serieHistorica`)
+  saiu do ar (domínio não resolve mais, confirmado em 2026-07-08);
+- o novo Painel de Indicadores SINISA é só interface de formulário (Vue/
+  Inertia), sem endpoint JSON documentado — as rotas internas de consulta
+  (`/indicador`, `/situacao-municipio`) dependem de estado de sessão do
+  formulário e retornam erro sem os parâmetros exatos que só a navegação
+  pelo navegador monta corretamente (confirmado testando essas rotas
+  diretamente).
 
-Passo manual (uma vez por atualização):
-1. Acesse **https://app4.mdr.gov.br/serieHistorica/** (ou o painel mais
-   novo, **https://indicadores-sinisa-2025.cidades.gov.br/**).
+Para água/esgoto 2015-2022 há um atalho automatizado — ver
+`04a_sinisa_basedosdados.py` abaixo — que não depende deste passo manual.
+Resíduos sólidos e os anos 2023-2024 de água/esgoto continuam exigindo o
+passo manual:
+1. Acesse **https://indicadores-sinisa-2025.cidades.gov.br/**.
 2. Filtre por **Estado = Pernambuco**, todos os municípios, e pelos anos
    configurados em `config.ANO_INICIO`..`config.ANO_FIM`.
 3. Exporte a planilha (CSV ou XLSX) com os indicadores de:
@@ -115,6 +122,39 @@ disponíveis no arquivo) em vez de gerar um déficit errado ou fictício —
 ajuste `CAMPOS_COBERTURA`/`CAMPOS_MUNICIPIO`/`CAMPOS_ANO` nesse caso.
 
 Déficit é sempre `100 - cobertura(%)`.
+
+### 04a — Água e esgoto via Base dos Dados (BigQuery) — automatizado, cobertura parcial
+Complemento automatizado ao passo 04: a [Base dos Dados](https://basedosdados.org)
+mantém uma cópia tratada da série histórica do SNIS em BigQuery
+(`basedosdados.br_mdr_snis.municipio_agua_esgoto`), sem precisar do
+formulário manual do Ministério das Cidades. Verificado antes de escrever
+o script (não presumido):
+
+- **Só cobre água e esgoto** — não existe tabela de resíduos sólidos na
+  Base dos Dados (conferido tanto na listagem completa do dataset
+  `br_mdr_snis` quanto no repositório
+  [`basedosdados/queries-basedosdados`](https://github.com/basedosdados/queries-basedosdados)).
+  `deficitResiduos` continua exigindo o passo manual (04).
+- **Só cobre até 2022** (o SNIS foi descontinuado e sucedido pelo SINISA
+  em 2024) — os anos 2023-2024 de água/esgoto também continuam exigindo o
+  passo manual.
+- Para esgoto não existe uma coluna "índice de atendimento total" pronta
+  como a de água (`indice_atendimento_total_agua`, IN023); usamos
+  `indice_coleta_esgoto`, que é o indicador que o próprio SNIS publica
+  para esse componente — não é equivalente 1:1 ao de água (é referido à
+  população atendida com água, não à população total do município).
+
+Requer `pip install basedosdados` e um projeto Google Cloud (nível
+gratuito/sandbox do BigQuery, sem cartão) — passe o project id via
+`--billing-project` ou variável de ambiente `BD_BILLING_PROJECT_ID`. Pede
+login interativo (abre o navegador) na primeira execução; sem projeto
+configurado, o passo é pulado (não quebra o `run_pipeline.py`).
+
+Faz merge com `data/processed/saneamento_pe.csv` em vez de sobrescrever —
+preserva `deficitResiduos` e qualquer ano já importado manualmente pelo
+passo 04. O passo 04, por sua vez, também foi ajustado para fazer merge
+(não sobrescrever), então a ordem entre 04 e 04a no `run_pipeline.py` não
+importa para não perder dado.
 
 ### 05 — Junção final
 Junta as quatro fontes por `(codigo_ibge, ano)`, calcula as taxas de saúde
