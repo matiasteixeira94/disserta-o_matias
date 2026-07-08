@@ -193,6 +193,26 @@ html[data-theme="dark"] .sidebar{ background:#0D0D26; }
 .map-dot{ cursor:default; }
 .map-dot-label{ font-family:var(--font-mono); font-size:3px; fill:var(--text-muted); }
 
+/* ============ MAPA GEOGRÁFICO ============ */
+.mapa-svg-wrap{ position:relative; }
+.path-municipio{ stroke:var(--surface); stroke-width:.3; cursor:pointer; }
+.path-municipio:hover{ opacity:.85; stroke:var(--text); stroke-width:.9; }
+.path-municipio.selecionado{ stroke:var(--azul); stroke-width:1.4; }
+.mapa-tooltip{
+  display:none; position:fixed; z-index:30; pointer-events:none;
+  background:var(--surface); color:var(--text); border:1px solid var(--border); border-radius:8px;
+  padding:8px 11px; font-size:12.5px; line-height:1.5; box-shadow:var(--shadow); max-width:220px;
+}
+.mapa-legenda{ display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin-top:14px; font-size:12px; color:var(--text-muted); }
+.legenda-barra{ width:130px; height:10px; border-radius:6px; background:linear-gradient(to right, var(--verde), var(--ambar), var(--terracota)); }
+.legenda-rotulo{ font-family:var(--font-mono); }
+.legenda-item{ display:flex; align-items:center; gap:6px; margin-left:10px; }
+.legenda-swatch{ width:10px; height:10px; border-radius:3px; display:inline-block; flex:0 0 auto; }
+.mapa-tabela-detalhe{ width:100%; border-collapse:collapse; font-size:13px; }
+.mapa-tabela-detalhe td{ padding:7px 0; border-bottom:1px solid var(--border); }
+.mapa-tabela-detalhe td:first-child{ color:var(--text-muted); }
+.mapa-tabela-detalhe td:last-child{ text-align:right; font-family:var(--font-mono); font-weight:600; }
+
 /* ============ PLACEHOLDER VIEWS ============ */
 .placeholder-box{
   background:var(--surface); border:1px dashed var(--border); border-radius:var(--radius);

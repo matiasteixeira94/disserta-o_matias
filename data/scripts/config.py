@@ -59,3 +59,15 @@ IBGE_SIDRA_POPULACAO_URL = (
     "https://servicodados.ibge.gov.br/api/v3/agregados/6579/periodos/{periodos}"
     "/variaveis/9324?localidades=N6[N3[{uf_codigo}]]"
 )
+# Malha territorial (polígonos dos municípios) — API de Malhas do IBGE.
+# qualidade=intermediaria: bom compromisso entre nitidez visual e tamanho de
+# arquivo (~220 KB para os 185 municípios de PE), suficiente para um mapa
+# em tela (não para uso cartográfico de precisão).
+IBGE_MALHA_URL = (
+    "https://servicodados.ibge.gov.br/api/v3/malhas/estados/{uf_codigo}"
+    "?intrarregiao=municipio&formato=application/vnd.geo+json&qualidade=intermediaria"
+)
+# Código IBGE do município de Fernando de Noronha (distrito estadual de PE,
+# ~350 km da costa) — tratado à parte no mapa (ver js/geo.js), pois incluí-lo
+# na projeção principal encolheria o continente para um ponto minúsculo.
+CODIGO_IBGE_FERNANDO_DE_NORONHA = 2605459

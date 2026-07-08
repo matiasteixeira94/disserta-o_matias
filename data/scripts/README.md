@@ -23,6 +23,7 @@ python 02_sinan_saude.py         # dengue e chikungunya (SINAN/DATASUS)
 python 03_sih_diarreia.py        # internações por diarreia aguda (SIH-SUS)
 python 04_sinisa_saneamento.py   # déficit de saneamento (SINISA/SNIS) — passo manual, ver abaixo
 python 05_build_painel.py        # junta tudo em data/processed/painel_pe.json
+python 06_ibge_malha_municipios.py  # polígonos dos municípios, para o mapa
 ```
 
 Todo download é cacheado em `data/raw/` — rodar de novo não baixa o que já
@@ -121,6 +122,15 @@ por 100 mil habitantes e grava `data/processed/painel_pe.json`, que é o
 único arquivo que o front-end (`js/data.js`) lê. Fontes ainda não
 processadas (ex.: SINISA antes do passo manual) resultam em campos `null`
 — o front-end mostra "sem dado" nesses casos, nunca um número inventado.
+
+### 06 — Malha territorial (para o mapa geográfico)
+- **API de Malhas** (`servicodados.ibge.gov.br`): polígonos dos 185
+  municípios de PE, qualidade "intermediária" (~220 KB, suficiente para
+  mapa em tela).
+- 100% automatizado, sem chave de API. Independente dos passos 01-05 e da
+  ordem em que roda — a malha territorial não muda de um ano para outro.
+- Gera `data/processed/malha_municipios_pe.geojson`, casado com o painel
+  por `codarea` == `codigo_ibge`. Usado por `js/geo.js`.
 
 ## Atualizações futuras
 

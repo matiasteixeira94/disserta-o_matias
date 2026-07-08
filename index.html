@@ -32,9 +32,9 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="5" rx="1.5"/><rect x="13" y="10" width="8" height="11" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/></svg>
         Dashboard
       </button>
-      <button class="nav-item disabled" data-view="mapa">
+      <button class="nav-item" data-view="mapa">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 4 3 6.5v14L9 18l6 2.5 6-2.5v-14L15 6.5 9 4Z"/><path d="M9 4v14M15 6.5v14"/></svg>
-        Mapa <span class="soon">em breve</span>
+        Mapa
       </button>
       <button class="nav-item disabled" data-view="relatorios">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3h9l5 5v13H6z"/><path d="M9 12h6M9 16h6M9 8h2"/></svg>
@@ -150,13 +150,40 @@
       </div>
     </section>
 
-    <!-- ===================== PLACEHOLDERS ===================== -->
+    <!-- ===================== MAPA ===================== -->
     <section id="view-mapa" class="view">
-      <div class="placeholder-box">
-        <h2>Mapa interativo</h2>
-        <p>Em desenvolvimento — parte de uma próxima etapa do protótipo, fora do recorte validado para esta entrega (Primeira Tela + Dashboard + menu).</p>
+      <div class="filter-bar">
+        <div class="field">
+          <label for="selCamadaMapa">Camada exibida</label>
+          <select id="selCamadaMapa">
+            <option value="indice">Índice de priorização (composto)</option>
+            <option value="deficitAgua">Déficit — Abastecimento de água</option>
+            <option value="deficitEsgoto">Déficit — Esgotamento sanitário</option>
+            <option value="deficitResiduos">Déficit — Resíduos sólidos</option>
+            <option value="taxaDengue">Dengue</option>
+            <option value="taxaChikungunya">Chikungunya</option>
+            <option value="taxaDiarreia">Diarreia aguda</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="panel panel-mapa">
+          <h2>Mapa geográfico de Pernambuco <span class="hint" id="mapaCamadaHint"></span></h2>
+          <div class="mapa-svg-wrap">
+            <svg id="mapaGeografico" role="img" aria-label="Mapa geográfico dos municípios de Pernambuco, coloridos pela camada selecionada"></svg>
+            <div class="mapa-tooltip" id="mapaTooltip"></div>
+          </div>
+          <div class="mapa-legenda" id="mapaLegenda"></div>
+        </div>
+        <div class="panel">
+          <h2>Município selecionado</h2>
+          <div id="mapaInfoMunicipio"></div>
+        </div>
       </div>
     </section>
+
+    <!-- ===================== PLACEHOLDERS ===================== -->
     <section id="view-relatorios" class="view">
       <div class="placeholder-box">
         <h2>Relatórios</h2>
@@ -176,6 +203,7 @@
 <script src="js/data.js"></script>
 <script src="js/stats.js"></script>
 <script src="js/render.js"></script>
+<script src="js/geo.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

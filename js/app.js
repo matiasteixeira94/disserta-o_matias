@@ -8,6 +8,7 @@ function setView(view){
   closeMobileMenu();
   if(view==='inicio') renderInicio();
   if(view==='dashboard') renderDashboard();
+  if(view==='mapa') renderMapaGeo();
 }
 
 document.getElementById('nav').addEventListener('click', (e)=>{
@@ -59,6 +60,12 @@ document.getElementById('pillsPeso').addEventListener('click', (e)=>{
   renderDashboard();
 });
 
+/* ============ FILTROS — MAPA ============ */
+document.getElementById('selCamadaMapa').addEventListener('change', (e)=>{
+  state.mapaCamada = e.target.value;
+  renderMapaGeo();
+});
+
 /* ============ INIT ============ */
 function popularSelectAnos(){
   const sel = document.getElementById('selAno');
@@ -85,6 +92,11 @@ async function iniciar(){
   } catch(erro){
     mostrarErroCarregamento(erro);
     return;
+  }
+  try{
+    await carregarMalha();
+  } catch(erro){
+    malhaErro = erro; // só afeta a view Mapa — Tela Inicial/Dashboard não dependem da malha
   }
   popularSelectAnos();
   popularSelectMunicipios(getDataset(state.ano));

@@ -16,7 +16,7 @@ const LABELS = {
 };
 
 let PAINEL = null; // payload bruto de data/processed/painel_pe.json
-let state = { ano:null, indicador:"taxaDengue", componente:"deficitAgua", municipioIdx:0, peso:"igual" };
+let state = { ano:null, indicador:"taxaDengue", componente:"deficitAgua", municipioIdx:0, peso:"igual", mapaCamada:"indice" };
 
 /* ============ CARREGAMENTO DOS DADOS REAIS ============ */
 async function carregarPainel(){
@@ -39,7 +39,7 @@ function getDataset(ano){
   return PAINEL.municipios
     .filter(m => String(m.ano) === String(ano))
     .map(m => ({
-      nome: m.municipio, uf: m.uf, pop: m.populacao,
+      codigo: m.codigo_ibge, nome: m.municipio, uf: m.uf, pop: m.populacao,
       deficitAgua: m.deficitAgua, deficitEsgoto: m.deficitEsgoto, deficitResiduos: m.deficitResiduos,
       taxaDengue: m.taxaDengue, taxaChikungunya: m.taxaChikungunya, taxaDiarreia: m.taxaDiarreia,
     }))

@@ -19,3 +19,7 @@ de novo para regenerar). Arquivos:
 - **`painel_pe.json`** — junção final de tudo acima (05); é o único
   arquivo que o front-end (`js/data.js`) lê, via `fetch`. Campos ainda não
   apurados aparecem como `null`, nunca como um valor fictício.
+- `malha_municipios_pe.geojson` — polígonos dos 185 municípios de PE (06),
+  usados pelo mapa geográfico (`js/geo.js`); cada feature tem só `codarea`
+  (código IBGE de 7 dígitos, casado com `codigo_ibge` do painel) e a
+  geometria. Independente do restante do pipeline.
