@@ -218,7 +218,7 @@ function renderInfoMunicipio(host, dataAno, camada){
   host.innerHTML = `
     <h3 style="margin-bottom:10px">${m.nome}-${m.uf}</h3>
     <div class="card-sub" style="margin-bottom:14px">${fmt(m.pop)} habitantes · ano ${state.ano}</div>
-    <div class="card accent-azul" style="margin-bottom:10px">
+    <div class="card accent-bordo" style="margin-bottom:10px">
       <span class="card-label">${rotuloCamada(camada)}</span>
       <span class="card-value">${v===null||v===undefined ? '—' : fmt(v,1)+' '+UNIDADE_CAMADA[camada]}</span>
     </div>

@@ -71,7 +71,7 @@ function renderInicio(){
   /* cards */
   clear2(cardsHost);
   cardsHost.innerHTML = `
-    <div class="card accent-azul">
+    <div class="card accent-bordo">
       <span class="card-label">Índice de priorização</span>
       <span class="card-value">${idxRank ? fmt(idx[posNoIdx],1) : '—'}</span>
       <span class="card-sub">${idxData.length ? `de 0 a 100 · pesos iguais · ${idxData.length} municípios com os 6 indicadores completos` : 'aguardando dados completos (ver aviso abaixo)'}</span>
@@ -160,7 +160,7 @@ function desenharComparacao(svg, m, compKey, saudeKey, mediaComp, mediaSaude){
   svg.appendChild(el('line',{x1:padL,y1:H-padB,x2:W-16,y2:H-padB,stroke:'var(--border)','stroke-width':1}));
   groups.forEach((g,gi)=>{
     const baseX = padL + gi*(gap+120) + 20;
-    [ {v:g.muni, color:'var(--azul)', dx:0, label:m.nome},
+    [ {v:g.muni, color:'var(--bordo)', dx:0, label:m.nome},
       {v:g.media, color:'var(--text-muted)', dx:44, label:'Média painel'} ].forEach(bar=>{
         const h = (bar.v/maxVal)*plotH;
         const x = baseX+bar.dx, y = H-padB-h;
@@ -173,7 +173,7 @@ function desenharComparacao(svg, m, compKey, saudeKey, mediaComp, mediaSaude){
     gl.textContent = g.label + ' ('+g.unit+')';
     svg.appendChild(gl);
   });
-  svg.appendChild(el('rect',{x:W-150,y:10,width:10,height:10,rx:2,fill:'var(--azul)'}));
+  svg.appendChild(el('rect',{x:W-150,y:10,width:10,height:10,rx:2,fill:'var(--bordo)'}));
   const leg1 = el('text',{x:W-134,y:19,'font-size':10.5,'font-family':'IBM Plex Sans',fill:'var(--text-muted)'}); leg1.textContent = m.nome; svg.appendChild(leg1);
   svg.appendChild(el('rect',{x:W-150,y:26,width:10,height:10,rx:2,fill:'var(--text-muted)'}));
   const leg2 = el('text',{x:W-134,y:35,'font-size':10.5,'font-family':'IBM Plex Sans',fill:'var(--text-muted)'}); leg2.textContent = 'Média do painel'; svg.appendChild(leg2);
@@ -245,7 +245,7 @@ function renderDashboard(){
   const piorSaude = data.reduce((acc,m)=> m.taxaDengue>acc.taxaDengue?m:acc, data[0]);
 
   cardsHost.innerHTML = `
-    <div class="card accent-azul">
+    <div class="card accent-bordo">
       <span class="card-label">Municípios com dados completos</span>
       <span class="card-value">${data.length}</span>
       <span class="card-sub">de ${dataAno.length} municípios de PE no ano selecionado</span>
@@ -294,7 +294,7 @@ function renderDashboard(){
     const y = padT + i*(barH+gapY);
     const w = (contribs[i]/maxC) * (W-padL-padR);
     const isSaude = INDICADORES_SAUDE.includes(k);
-    svgDecomp.appendChild(el('rect',{x:padL, y, width:Math.max(w,1), height:barH, rx:6, fill:isSaude?'var(--terracota)':'var(--azul)'}));
+    svgDecomp.appendChild(el('rect',{x:padL, y, width:Math.max(w,1), height:barH, rx:6, fill:isSaude?'var(--terracota)':'var(--bordo)'}));
     const lbl = el('text',{x:padL-10, y:y+barH/2+4, 'text-anchor':'end', 'font-size':12, 'font-family':'IBM Plex Sans', fill:'var(--text)'});
     lbl.textContent = LABELS[k]; svgDecomp.appendChild(lbl);
     const val = el('text',{x:padL+w+8, y:y+barH/2+4, 'font-size':11.5, 'font-family':'IBM Plex Mono', fill:'var(--text-muted)'});
