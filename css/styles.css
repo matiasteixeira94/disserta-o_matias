@@ -109,7 +109,7 @@ html[data-theme="dark"] .sidebar{ background:#180208; }
 .topbar-filtros{ display:flex; gap:12px; flex:0 0 auto; }
 .field-compacto{ min-width:0; gap:3px; }
 .field-compacto label{ font-size:10px; }
-.field-compacto select{ min-width:0; padding:6px 8px; font-size:12.5px; }
+.field-compacto select, .field-compacto input[list]{ min-width:0; width:150px; padding:6px 8px; font-size:12.5px; }
 .badge-proto{
   font-family:var(--font-mono); font-size:10.5px; text-transform:uppercase; letter-spacing:.04em;
   background:color-mix(in srgb, var(--terracota) 16%, transparent); color:var(--terracota);
@@ -179,10 +179,12 @@ html[data-theme="dark"] .sidebar{ background:#180208; }
 }
 .field{ display:flex; flex-direction:column; gap:6px; min-width:170px; }
 .field label, .field-label{ font-size:12px; color:var(--text-muted); font-weight:600; text-transform:uppercase; letter-spacing:.03em; }
-.field select{
+.field select, .field input[list]{
   background:var(--surface-alt); border:1px solid var(--border); border-radius:8px; padding:9px 10px;
-  color:var(--text); min-width:180px;
+  color:var(--text); min-width:180px; font-family:var(--font-body); font-size:14px;
 }
+.field input[list]:focus{ outline:none; border-color:var(--bordo-claro); }
+.field input[list]::-webkit-calendar-picker-indicator{ opacity:.6; cursor:pointer; }
 .pills{ display:flex; gap:8px; flex-wrap:wrap; }
 .pill{
   background:var(--surface-alt); border:1px solid var(--border); border-radius:20px; padding:8px 15px; cursor:pointer;
@@ -318,7 +320,7 @@ html[data-theme="dark"] .sidebar{ background:#180208; }
   .cards-row{ grid-template-columns:1fr 1fr; gap:10px; }
   .card .card-value{ font-size:21px; }
   .filter-bar{ padding:14px; gap:12px; }
-  .field, .field select{ min-width:0; width:100%; }
+  .field, .field select, .field input[list]{ min-width:0; width:100%; }
   .corr-row{ flex-direction:column; align-items:stretch; }
 }
 @media (max-width: 460px){

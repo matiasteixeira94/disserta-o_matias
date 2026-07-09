@@ -50,10 +50,9 @@ btnTheme.addEventListener('click', ()=>{
   btnTheme.setAttribute('aria-pressed', String(!isDark));
 });
 
-/* ============ FILTROS — MUNICÍPIO/ANO (globais, no topo da página) E INDICADOR/COMPONENTE (Dashboard) ============ */
-['selMunicipio','selAno','selIndicador','selComponente'].forEach(id=>{
+/* ============ FILTROS — ANO (global) E INDICADOR/COMPONENTE (Dashboard) ============ */
+['selAno','selIndicador','selComponente'].forEach(id=>{
   document.getElementById(id).addEventListener('change', (e)=>{
-    if(id==='selMunicipio') state.municipioIdx = Number(e.target.value);
     if(id==='selAno'){
       state.ano = e.target.value;
       popularSelectMunicipios(getDataset(state.ano));
@@ -62,6 +61,22 @@ btnTheme.addEventListener('click', ()=>{
     if(id==='selComponente') state.componente = e.target.value;
     renderCurrentView();
   });
+});
+
+/* ============ BUSCA DE MUNICÍPIO (global, no topo da página) ============
+   Campo de texto + datalist (em vez de <select>) para dar busca por nome entre
+   os 185 municípios — digitar filtra as sugestões do navegador; só um rótulo
+   que bate exatamente com um município (escolhido da lista ou digitado por
+   completo) muda o estado, senão o campo volta pro último município válido. */
+document.getElementById('selMunicipio').addEventListener('change', (e)=>{
+  const data = getDataset(state.ano);
+  const m = encontrarMunicipioPorRotulo(data, e.target.value);
+  if(m){
+    state.municipioIdx = data.indexOf(m);
+    renderCurrentView();
+  } else {
+    e.target.value = data[state.municipioIdx] ? rotuloMunicipio(data[state.municipioIdx]) : '';
+  }
 });
 
 /* ============ FILTROS — DASHBOARD ============ */
@@ -79,18 +94,24 @@ document.getElementById('selCamadaMapa').addEventListener('change', (e)=>{
   renderMapaGeo();
 });
 document.getElementById('selMunicipioMapa').addEventListener('change', (e)=>{
-  mapaSelecionado = e.target.value ? Number(e.target.value) : null;
-  renderMapaGeo();
+  if(e.target.value === ''){ mapaSelecionado = null; renderMapaGeo(); return; }
+  const m = encontrarMunicipioPorRotulo(getDataset(state.ano), e.target.value);
+  if(m){ mapaSelecionado = m.codigo; renderMapaGeo(); }
+  else e.target.value = '';
 });
 
 /* ============ FILTROS — COMPARAÇÕES ============ */
 document.getElementById('selCompA').addEventListener('change', (e)=>{
-  state.compA = Number(e.target.value);
-  renderComparacoes();
+  const data = getDataset(state.ano);
+  const m = encontrarMunicipioPorRotulo(data, e.target.value);
+  if(m){ state.compA = data.indexOf(m); renderComparacoes(); }
+  else e.target.value = data[state.compA] ? rotuloMunicipio(data[state.compA]) : '';
 });
 document.getElementById('selCompB').addEventListener('change', (e)=>{
-  state.compB = Number(e.target.value);
-  renderComparacoes();
+  const data = getDataset(state.ano);
+  const m = encontrarMunicipioPorRotulo(data, e.target.value);
+  if(m){ state.compB = data.indexOf(m); renderComparacoes(); }
+  else e.target.value = data[state.compB] ? rotuloMunicipio(data[state.compB]) : '';
 });
 
 /* ============ EXPORTAÇÃO — RELATÓRIOS ============ */

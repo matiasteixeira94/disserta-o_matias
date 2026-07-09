@@ -32,19 +32,30 @@ function avisoSaneamento(compKey){
   return "O déficit de saneamento ainda não foi importado para este painel — ver data/scripts/README.md.";
 }
 
-/* ============ POPULAR SELECT DE MUNICÍPIOS (depende do ano, refeito a cada troca) ============ */
-function popularSelectMunicipios(data){
-  const sel = document.getElementById('selMunicipio');
-  const anterior = sel.value;
-  clear(sel);
-  data.forEach((m,i)=>{
+/* ============ BUSCA DE MUNICÍPIO (input + datalist compartilhado por todos os
+   seletores de município do painel — o roster de 185 é o mesmo em todos os anos,
+   só o valor dos indicadores muda, então o datalist só precisa ser populado uma vez) ============ */
+function rotuloMunicipio(m){ return `${m.nome} — ${m.uf}`; }
+function popularDatalistMunicipios(data){
+  const dl = document.getElementById('dlMunicipiosPE');
+  if(!dl || dl.options.length) return;
+  data.forEach(m=>{
     const opt = document.createElement('option');
-    opt.value = i; opt.textContent = `${m.nome} — ${m.uf}`;
-    sel.appendChild(opt);
+    opt.value = rotuloMunicipio(m);
+    dl.appendChild(opt);
   });
-  const idx = Math.min(Number(anterior)||0, data.length-1);
-  sel.value = idx >= 0 ? idx : 0;
-  state.municipioIdx = idx >= 0 ? idx : 0;
+}
+function encontrarMunicipioPorRotulo(data, rotulo){
+  return data.find(m => rotuloMunicipio(m) === rotulo) || null;
+}
+
+/* ============ SELEÇÃO DE MUNICÍPIO NO TOPO DA PÁGINA (depende do ano, refeito a cada troca) ============ */
+function popularSelectMunicipios(data){
+  popularDatalistMunicipios(data);
+  const input = document.getElementById('selMunicipio');
+  const idx = Math.min(Math.max(state.municipioIdx || 0, 0), data.length-1);
+  state.municipioIdx = idx;
+  if(input && data[idx]) input.value = rotuloMunicipio(data[idx]);
 }
 
 /* linha do tempo do índice de priorização (pesos iguais) do município selecionado
@@ -225,8 +236,8 @@ function renderInicio(){
       ? "na direção esperada pela literatura (mais déficit associado a mais carga da doença)"
       : "na direção oposta à esperada pela literatura — vale investigar outros fatores antes de priorizar só por este par de variáveis";
     const posicaoTxt = (semComp || semSaude) ? '' :
-      ` Em <strong>${m.nome}-${m.uf}</strong>, o déficit de ${LABELS[compKey].toLowerCase()} está em <strong>${fmt(m[compKey],1)}%</strong> e a taxa de ${LABELS[saudeKey].toLowerCase()} é de <strong>${fmt(m[saudeKey])} casos/100 mil hab.</strong>`;
-    textoHost.innerHTML = `Considerando os <strong>${completosAmbos.length} municípios</strong> de PE com ambos os indicadores apurados neste ano, a correlação de Spearman entre déficit de ${LABELS[compKey].toLowerCase()} e ${LABELS[saudeKey].toLowerCase()} é <strong>${forca}</strong> e <strong>${direcao}</strong> (ρ = ${rho.toFixed(2)}) — ${esperado}.${posicaoTxt} Texto gerado automaticamente a partir dos filtros selecionados.`;
+      ` Em <strong>${m.nome}-${m.uf}</strong>, o ${LABELS[compKey].toLowerCase()} está em <strong>${fmt(m[compKey],1)}%</strong> e a taxa de ${LABELS[saudeKey].toLowerCase()} é de <strong>${fmt(m[saudeKey])} casos/100 mil hab.</strong>`;
+    textoHost.innerHTML = `Considerando os <strong>${completosAmbos.length} municípios</strong> de PE com ambos os indicadores apurados neste ano, a correlação de Spearman entre ${LABELS[compKey].toLowerCase()} e ${LABELS[saudeKey].toLowerCase()} é <strong>${forca}</strong> e <strong>${direcao}</strong> (ρ = ${rho.toFixed(2)}) — ${esperado}.${posicaoTxt} Texto gerado automaticamente a partir dos filtros selecionados.`;
 
     desenharDispersaoCorrelacao(chartCorr, completosAmbos, compKey, saudeKey, semComp||semSaude ? null : m);
     chartCorrHint.textContent = `— ${completosAmbos.length} municípios com os dois indicadores apurados em ${state.ano}, ρ = ${rho.toFixed(2)}`;
@@ -629,23 +640,18 @@ function renderRelatorios(){
 
 /* ============ RENDER: COMPARAÇÕES ============ */
 function popularSelectComparacao(data){
+  popularDatalistMunicipios(data);
   const configs = [
     {id:"selCompA", key:"compA", fallback:0},
     {id:"selCompB", key:"compB", fallback: data.length>1 ? 1 : 0},
   ];
   configs.forEach(cfg=>{
-    const sel = document.getElementById(cfg.id);
-    const anteriorRaw = sel.value;
-    clear(sel);
-    data.forEach((m,i)=>{
-      const opt = document.createElement("option");
-      opt.value = i; opt.textContent = `${m.nome} — ${m.uf}`;
-      sel.appendChild(opt);
-    });
-    let idx = anteriorRaw === "" ? cfg.fallback : Number(anteriorRaw);
+    const input = document.getElementById(cfg.id);
+    let idx = state[cfg.key];
+    if(idx===undefined || idx===null) idx = cfg.fallback;
     idx = Math.max(0, Math.min(idx, data.length-1));
-    sel.value = idx;
     state[cfg.key] = idx;
+    if(input && data[idx]) input.value = rotuloMunicipio(data[idx]);
   });
 }
 
