@@ -129,6 +129,7 @@ html[data-theme="dark"] .sidebar{ background:#180208; }
 
 .view{ display:none; padding:26px 28px 60px; max-width:1280px; }
 .view.active{ display:block; }
+#view-inicio{ max-width:none; } /* a Tela Inicial não segue a largura de leitura das telas de dado — a logo pode ocupar quase a tela toda */
 
 /* ============ HERO — TELA INICIAL ============ */
 .hero-inicio{
@@ -142,10 +143,10 @@ html[data-theme="dark"] .sidebar{ background:#180208; }
 }
 .hero-institucional-destaque{ color:var(--bordo) !important; margin-bottom:0 !important; }
 .hero-logo-wrap{
-  background:#fff; border-radius:var(--radius); padding:30px 42px; box-shadow:var(--shadow);
+  background:#fff; border-radius:var(--radius); padding:44px 64px; box-shadow:var(--shadow);
   border:1px solid var(--border); max-width:100%;
 }
-.hero-logo{ display:block; width:min(780px, 100%); height:auto; }
+.hero-logo{ display:block; width:min(1500px, 92vw); height:auto; }
 .hero-nav{ display:flex; flex-wrap:wrap; justify-content:center; gap:10px; }
 .hero-nav-btn{
   display:flex; align-items:center; gap:9px; background:var(--surface); border:1px solid var(--border);
