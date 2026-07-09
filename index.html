@@ -122,22 +122,6 @@
             <button class="pill" data-peso="pca">PCA (1º componente)</button>
           </div>
         </div>
-        <div class="field">
-          <label for="selIndicador">Indicador de saúde</label>
-          <select id="selIndicador">
-            <option value="taxaDengue">Dengue</option>
-            <option value="taxaChikungunya">Chikungunya</option>
-            <option value="taxaDiarreia">Diarreia aguda</option>
-          </select>
-        </div>
-        <div class="field">
-          <label for="selComponente">Componente de saneamento</label>
-          <select id="selComponente">
-            <option value="deficitAgua">Déficit — Abastecimento de água</option>
-            <option value="deficitEsgoto">Déficit — Esgotamento sanitário</option>
-            <option value="deficitResiduos">Déficit — Resíduos sólidos (sem dado ainda)</option>
-          </select>
-        </div>
       </div>
 
       <p class="scope-note">O <strong>índice de priorização</strong> combina déficit de água, de esgoto e os indicadores de saúde: quanto <strong>maior</strong> o índice, <strong>maior a carência</strong> do município e mais ele deveria ser priorizado em novos investimentos — não é uma nota de desempenho. O ranking abaixo está ordenado do município que mais precisa de investimento para o que menos precisa.</p>
@@ -166,7 +150,26 @@
       </div>
 
       <div class="secao-divisor">
-        <h2>Município em foco <span class="hint">— use os seletores de Município/Ano no topo da página</span></h2>
+        <h2>Município em foco <span class="hint">— use o seletor de Município/Ano no topo da página; os dois campos abaixo só afetam esta seção</span></h2>
+      </div>
+
+      <div class="filter-bar">
+        <div class="field">
+          <label for="selIndicador">Indicador de saúde</label>
+          <select id="selIndicador">
+            <option value="taxaDengue">Dengue</option>
+            <option value="taxaChikungunya">Chikungunya</option>
+            <option value="taxaDiarreia">Diarreia aguda</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="selComponente">Componente de saneamento</label>
+          <select id="selComponente">
+            <option value="deficitAgua">Déficit — Abastecimento de água</option>
+            <option value="deficitEsgoto">Déficit — Esgotamento sanitário</option>
+            <option value="deficitResiduos">Déficit — Resíduos sólidos (sem dado ainda)</option>
+          </select>
+        </div>
       </div>
 
       <div class="cards-row" id="cardsInicio"></div>
