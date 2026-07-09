@@ -232,6 +232,8 @@ html[data-theme="dark"] .sidebar{ background:#180208; }
 .ranking-list{ display:flex; flex-direction:column; gap:8px; max-height:390px; overflow-y:auto; padding-right:4px;}
 .rank-item{ display:flex; align-items:center; gap:12px; padding:9px 10px; border-radius:10px; }
 .rank-item:nth-child(odd){ background:var(--surface-alt); }
+.rank-item-selecionado{ background:color-mix(in srgb, var(--bordo) 14%, transparent) !important; box-shadow:inset 0 0 0 1.5px var(--bordo); }
+.rank-item-selecionado .rank-name strong{ color:var(--bordo); }
 .rank-pos{ font-family:var(--font-mono); font-weight:600; width:22px; color:var(--text-muted); flex:0 0 auto; }
 .rank-name{ flex:1; min-width:0; }
 .rank-name strong{ display:block; font-size:13.5px; }
@@ -266,6 +268,7 @@ html[data-theme="dark"] .sidebar{ background:#180208; }
 
 /* ============ NOTA DE ESCOPO ============ */
 .scope-note{ font-size:12.5px; color:var(--text-muted); margin-bottom:18px; line-height:1.6; max-width:900px; }
+.scope-note:empty{ display:none; margin:0; }
 .scope-note code{ font-family:var(--font-mono); background:var(--surface-alt); padding:1px 5px; border-radius:4px; }
 
 /* ============ AÇÕES / EXPORTAÇÃO ============ */

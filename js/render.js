@@ -47,6 +47,75 @@ function popularSelectMunicipios(data){
   state.municipioIdx = idx >= 0 ? idx : 0;
 }
 
+/* linha do tempo do índice de priorização (pesos iguais) do município selecionado
+   vs. a média do painel, ano a ano — anos em que o índice não é calculável (menos de
+   2 municípios com os indicadores completos, ou o próprio município sem dado naquele
+   ano) ficam como um vão na linha, nunca interpolados ou inventados. */
+function desenharIndiceTemporal(svg, codigoMunicipio, nomeMunicipio){
+  clear(svg);
+  if(!PAINEL) return;
+  const anos = [];
+  for(let a = PAINEL.anoInicio; a <= PAINEL.anoFim; a++) anos.push(a);
+
+  const pontosMunicipio = [], pontosMedia = [];
+  anos.forEach(a=>{
+    const completos = comDadosCompletos(getDataset(a), INDICADORES_INDICE);
+    if(completos.length < 2){ pontosMunicipio.push(null); pontosMedia.push(null); return; }
+    const idx = computeIndex(completos, "igual");
+    pontosMedia.push(idx.reduce((s,v)=>s+v,0)/idx.length);
+    const pos = completos.findIndex(m=>m.codigo===codigoMunicipio);
+    pontosMunicipio.push(pos>=0 ? idx[pos] : null);
+  });
+
+  const W=900,H=220,padL=44,padR=120,padT=16,padB=32;
+  const plotW=W-padL-padR, plotH=H-padT-padB;
+  const valoresValidos = [...pontosMunicipio, ...pontosMedia].filter(v=>v!==null);
+  if(!valoresValidos.length){
+    svg.appendChild(svgTexto("Índice não calculável em nenhum ano para os filtros atuais.", W, H));
+    return 0;
+  }
+  const maxV = Math.max(...valoresValidos)*1.15 || 1;
+  const sx = i => padL + (anos.length>1 ? i/(anos.length-1)*plotW : plotW/2);
+  const sy = v => padT + plotH - (v/maxV)*plotH;
+
+  for(let i=0;i<=4;i++){
+    const v = maxV*i/4;
+    const y = sy(v);
+    svg.appendChild(el("line",{x1:padL, y1:y, x2:W-padR, y2:y, stroke:"var(--border)", "stroke-width":1}));
+    const t = el("text",{x:padL-8, y:y+3, "text-anchor":"end", "font-size":10, "font-family":"IBM Plex Mono", fill:"var(--text-muted)"});
+    t.textContent = fmt(v,0); svg.appendChild(t);
+  }
+  anos.forEach((a,i)=>{
+    const t = el("text",{x:sx(i), y:H-8, "text-anchor":"middle", "font-size":10, "font-family":"IBM Plex Mono", fill:"var(--text-muted)"});
+    t.textContent = a; svg.appendChild(t);
+  });
+
+  function desenharLinha(pontos, cor, rotulo){
+    let pathD = "", ultimo = null;
+    pontos.forEach((v,i)=>{
+      if(v===null) return;
+      const x = sx(i), y = sy(v);
+      pathD += (pathD ? " L" : "M") + x + " " + y;
+      ultimo = {x,y,v};
+    });
+    if(pathD) svg.appendChild(el("path",{d:pathD, fill:"none", stroke:cor, "stroke-width":2, "stroke-linecap":"round", "stroke-linejoin":"round"}));
+    pontos.forEach((v,i)=>{
+      if(v===null) return;
+      svg.appendChild(el("circle",{cx:sx(i), cy:sy(v), r:4, fill:cor, stroke:"var(--surface)", "stroke-width":1.5}));
+    });
+    if(ultimo){
+      const lbl = el("text",{x:ultimo.x+8, y:ultimo.y+4, "font-size":11, "font-family":"IBM Plex Sans", "font-weight":600, fill:cor});
+      lbl.textContent = rotulo; svg.appendChild(lbl);
+      const val = el("text",{x:ultimo.x+8, y:ultimo.y+18, "font-size":10, "font-family":"IBM Plex Mono", fill:"var(--text-muted)"});
+      val.textContent = fmt(ultimo.v,1); svg.appendChild(val);
+    }
+  }
+
+  desenharLinha(pontosMedia, "var(--text-muted)", "Média do painel");
+  desenharLinha(pontosMunicipio, "var(--bordo)", nomeMunicipio);
+  return pontosMunicipio.filter(v=>v!==null).length;
+}
+
 /* ============ RENDER: MUNICÍPIO EM FOCO (seção do Dashboard) ============
    Mantém o nome renderInicio por ora — renderiza a seção "Município em foco"
    do Dashboard (cards, comparação com a média, mapa esquemático e a
@@ -59,10 +128,11 @@ function renderInicio(){
   if(data.length === 0){
     clear2(cardsHost);
     cardsHost.innerHTML = placeholderHTML('Sem dados para este ano', 'Nenhum município com população apurada para o ano selecionado. Rode o pipeline em data/scripts/ (ver README) para gerar data/processed/painel_pe.json.');
-    clear(svgComp); clear(document.getElementById('mapaInicio')); clear(document.getElementById('chartCorrelacaoDispersao'));
+    clear(svgComp); clear(document.getElementById('mapaInicio')); clear(document.getElementById('chartCorrelacaoDispersao')); clear(document.getElementById('chartIndiceTemporal'));
     document.getElementById('corrValue').textContent = '—';
     document.getElementById('interpretacaoTexto').textContent = '';
     document.getElementById('corrChartHint').textContent = '';
+    document.getElementById('temporalHint').textContent = '';
     return;
   }
 
@@ -107,6 +177,16 @@ function renderInicio(){
       <span class="card-value">${semSaude ? '—' : fmt(m[saudeKey])}</span>
       <span class="card-sub">${semSaude ? 'sem casos/notificações apuradas' : `casos / 100 mil hab. · ${saudeRank}ª posição de ${completosSaude.length}`}</span>
     </div>`;
+
+  /* evolução do índice do município ao longo dos anos, vs. média do painel em cada ano */
+  const svgTemporal = document.getElementById('chartIndiceTemporal');
+  const temporalHint = document.getElementById('temporalHint');
+  if(svgTemporal && temporalHint){
+    const anosComPonto = desenharIndiceTemporal(svgTemporal, m.codigo, `${m.nome}-${m.uf}`);
+    temporalHint.textContent = anosComPonto
+      ? `— ${m.nome}-${m.uf} vs. média do painel, ${PAINEL.anoInicio}-${PAINEL.anoFim} (pesos iguais)`
+      : `— ${m.nome}-${m.uf} não tem os ${INDICADORES_INDICE.length} indicadores do índice completos em nenhum ano; só a média do painel aparece no gráfico`;
+  }
 
   /* gráfico de comparação (barras SVG) — só quando há os dois valores para o município */
   clear(svgComp);
@@ -274,7 +354,7 @@ function clear2(node){ node.innerHTML=""; }
    `todos` = lista completa de municípios do ano (define a grade de posições);
    `idxValues`/`idxData` = índice de priorização e a sublista para a qual ele
    foi calculado (pode ser um subconjunto de `todos`, se faltar algum dado). */
-function renderMapa(svgId, todos, idxValues, highlightPos, idxData){
+function renderMapa(svgId, todos, idxValues, highlightPos, idxData, selectedPos){
   const svg = document.getElementById(svgId);
   clear(svg);
   svg.appendChild(el('rect',{x:2,y:2,width:96,height:96,rx:4,fill:'var(--surface-alt)',stroke:'var(--border)','stroke-width':0.6}));
@@ -290,9 +370,14 @@ function renderMapa(svgId, todos, idxValues, highlightPos, idxData){
       r = 1.6 + t*1.8;
     }
     const isHighlight = i === highlightPos;
-    const c = el('circle',{cx:x, cy:y, r, fill:color, class:'map-dot', opacity: isHighlight?1:0.8});
+    const isSelected = selectedPos !== undefined && i === selectedPos;
+    const c = el('circle',{cx:x, cy:y, r, fill:color, class:'map-dot', opacity: (isHighlight||isSelected)?1:0.8});
     if(isHighlight){
       svg.appendChild(el('circle',{cx:x, cy:y, r:r+2.2, fill:'none', stroke:color, 'stroke-width':0.7}));
+    }
+    if(isSelected){
+      /* anel bordô: o município escolhido nos seletores do topo — distinto do anel de maior prioridade acima */
+      svg.appendChild(el('circle',{cx:x, cy:y, r:r+(isHighlight?3.8:2.2), fill:'none', stroke:'var(--bordo)', 'stroke-width':0.9}));
     }
     svg.appendChild(c);
   });
@@ -305,17 +390,19 @@ function renderDashboard(){
   const dataAno = getDataset(state.ano);
   const data = comDadosCompletos(dataAno, INDICADORES_INDICE);
   const hint = document.getElementById('rankingHint');
-  if(hint) hint.textContent = `— ${data.length} de ${dataAno.length} municípios de PE com os ${INDICADORES_INDICE.length} indicadores do índice completos`;
+  if(hint) hint.textContent = `— do que mais precisa de investimento para o que menos precisa · ${data.length} de ${dataAno.length} municípios de PE com os ${INDICADORES_INDICE.length} indicadores do índice completos`;
 
   const cardsHost = document.getElementById('cardsDashboard');
   const rankHost = document.getElementById('rankingList');
   const svgDecomp = document.getElementById('chartDecomposicao');
 
+  const avisoForaIndice = document.getElementById('avisoMunicipioForaIndice');
   if(dataAno.length === 0){
     clear2(cardsHost);
     cardsHost.innerHTML = placeholderHTML('Sem dados para este ano', 'Rode o pipeline em data/scripts/ (ver README) para gerar data/processed/painel_pe.json.');
     rankHost.innerHTML = ""; clear(svgDecomp); clear(document.getElementById('mapaDashboard'));
     document.getElementById('topMunicipioNome').textContent = '';
+    if(avisoForaIndice) avisoForaIndice.textContent = '';
     return;
   }
   if(data.length < 2){
@@ -324,11 +411,22 @@ function renderDashboard(){
     rankHost.innerHTML = ""; clear(svgDecomp);
     renderMapa('mapaDashboard', dataAno, null, -1, null);
     document.getElementById('topMunicipioNome').textContent = '';
+    if(avisoForaIndice) avisoForaIndice.textContent = '';
     return;
   }
 
   const idx = computeIndex(data, state.peso);
   const ordered = data.map((m,i)=>({m,val:idx[i]})).sort((a,b)=>b.val-a.val);
+  const municipioSel = dataAno[state.municipioIdx] || dataAno[0];
+
+  if(avisoForaIndice){
+    if(data.includes(municipioSel)){
+      avisoForaIndice.textContent = '';
+    } else {
+      const faltando = INDICADORES_INDICE.find(k => municipioSel[k]===null || municipioSel[k]===undefined);
+      avisoForaIndice.textContent = `${municipioSel.nome}-${municipioSel.uf} (selecionado no topo da página) não aparece no ranking nem no mapa de calor abaixo: falta o indicador "${LABELS[faltando]}" para esse município em ${state.ano}. Os cards de "Município em foco" mais abaixo continuam mostrando os indicadores que esse município tem.`;
+    }
+  }
 
   const top = ordered[0];
   const mediaIdx = idx.reduce((a,b)=>a+b,0)/idx.length;
@@ -360,16 +458,18 @@ function renderDashboard(){
   rankHost.innerHTML = "";
   const maxVal = ordered[0].val || 1;
   ordered.forEach((o,i)=>{
-    const row = document.createElement('div'); row.className='rank-item';
+    const isSel = o.m === municipioSel;
+    const row = document.createElement('div'); row.className = 'rank-item' + (isSel ? ' rank-item-selecionado' : '');
     row.innerHTML = `
       <span class="rank-pos">${i+1}º</span>
-      <span class="rank-name"><strong>${o.m.nome}</strong><span>${o.m.uf} · ${fmt(o.m.pop)} hab.</span></span>
+      <span class="rank-name"><strong>${o.m.nome}</strong><span>${o.m.uf} · ${fmt(o.m.pop)} hab.${isSel ? ' · <strong>selecionado no topo da página</strong>' : ''}</span></span>
       <span class="rank-bar-wrap"><span class="rank-bar" style="width:${(o.val/maxVal*100).toFixed(0)}%"></span></span>
       <span class="rank-value">${fmt(o.val,1)}</span>`;
     rankHost.appendChild(row);
+    if(isSel && row.scrollIntoView) row.scrollIntoView({block:'nearest'});
   });
 
-  renderMapa('mapaDashboard', dataAno, idx, dataAno.indexOf(top.m), data);
+  renderMapa('mapaDashboard', dataAno, idx, dataAno.indexOf(top.m), data, dataAno.indexOf(municipioSel));
 
   /* decomposição do índice do município #1 */
   clear(svgDecomp);
