@@ -94,8 +94,26 @@ function escalaCor(t){
 function corSemDado(){ return corCss('--border'); }
 
 /* ============ CAMADAS EXIBÍVEIS NO MAPA ============ */
-const UNIDADE_CAMADA = { indice: '/ 100', deficitAgua: '%', deficitEsgoto: '%', deficitResiduos: '%', taxaDengue: '/100 mil hab.', taxaChikungunya: '/100 mil hab.', taxaDiarreia: '/100 mil hab.' };
-function rotuloCamada(camada){ return camada === 'indice' ? 'Índice de priorização (composto)' : LABELS[camada]; }
+/* "investimento" não é um dado novo — é a mesma leitura de sempre neste painel (déficit
+   é sempre 100 - cobertura, ver data/scripts/README.md), só invertida: quanto menor o
+   déficit de água/esgoto/resíduos, mais cobertura de infraestrutura o município tem, o
+   que serve de proxy de quanto já foi investido nela historicamente. */
+const CAMADA_INVESTIMENTO = { investAgua: 'deficitAgua', investEsgoto: 'deficitEsgoto', investResiduos: 'deficitResiduos' };
+const LABEL_INVESTIMENTO = {
+  investAgua: 'Investimento — Abastecimento de água',
+  investEsgoto: 'Investimento — Esgotamento sanitário',
+  investResiduos: 'Investimento — Resíduos sólidos',
+};
+const UNIDADE_CAMADA = {
+  indice: '/ 100', deficitAgua: '%', deficitEsgoto: '%', deficitResiduos: '%',
+  taxaDengue: '/100 mil hab.', taxaChikungunya: '/100 mil hab.', taxaDiarreia: '/100 mil hab.',
+  investAgua: '%', investEsgoto: '%', investResiduos: '%',
+};
+function rotuloCamada(camada){
+  if(camada === 'indice') return 'Índice de priorização (composto)';
+  if(LABEL_INVESTIMENTO[camada]) return LABEL_INVESTIMENTO[camada];
+  return LABELS[camada];
+}
 
 /* retorna Map<codigo_ibge, valor|null> para a camada e ano selecionados */
 function valoresPorCamada(dataAno, camada){
@@ -106,6 +124,12 @@ function valoresPorCamada(dataAno, camada){
       const idx = computeIndex(completos, state.peso || 'igual');
       completos.forEach((m,i) => mapa.set(m.codigo, idx[i]));
     }
+  } else if(CAMADA_INVESTIMENTO[camada]){
+    const chaveDeficit = CAMADA_INVESTIMENTO[camada];
+    dataAno.forEach(m => {
+      const d = m[chaveDeficit];
+      mapa.set(m.codigo, (d===null || d===undefined) ? null : round1(100-d));
+    });
   } else {
     dataAno.forEach(m => mapa.set(m.codigo, m[camada] ?? null));
   }
@@ -194,7 +218,8 @@ function renderMapaGeo(){
 
 function renderLegenda(host, camada, min, max, temDados){
   if(!temDados){
-    host.innerHTML = `<span class="legenda-swatch" style="background:${corSemDado()}"></span> nenhum dado apurado para esta camada/ano ${camada!=='indice' && INDICADORES_DEFICIT.includes(camada) ? '(SINISA/SNIS ainda não importado — ver data/scripts/README.md)' : ''}`;
+    const ehSaneamento = INDICADORES_DEFICIT.includes(camada) || CAMADA_INVESTIMENTO[camada];
+    host.innerHTML = `<span class="legenda-swatch" style="background:${corSemDado()}"></span> nenhum dado apurado para esta camada/ano ${camada!=='indice' && ehSaneamento ? '(SINISA/SNIS ainda não importado — ver data/scripts/README.md)' : ''}`;
     return;
   }
   host.innerHTML = `

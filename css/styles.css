@@ -216,6 +216,7 @@ html[data-theme="dark"] .sidebar{ background:#180208; }
 .panel h2{ font-size:15px; font-weight:600; margin-bottom:14px; }
 .panel h2 .hint{ font-size:12px; font-weight:400; color:var(--text-muted); }
 .panel svg{ width:100%; height:auto; display:block; }
+#chartDecomposicao{ max-width:640px; margin:0 auto; }
 
 .corr-row{ display:flex; gap:26px; align-items:center; flex-wrap:wrap; }
 .corr-stat{ display:flex; flex-direction:column; align-items:center; background:var(--surface-alt); border-radius:12px; padding:16px 26px; min-width:150px; }

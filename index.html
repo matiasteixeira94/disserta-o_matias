@@ -135,12 +135,21 @@
             <label for="selCamadaMapa">Camada exibida</label>
             <select id="selCamadaMapa">
               <option value="indice">Índice de priorização (composto)</option>
-              <option value="deficitAgua">Déficit — Abastecimento de água</option>
-              <option value="deficitEsgoto">Déficit — Esgotamento sanitário</option>
-              <option value="deficitResiduos">Déficit — Resíduos sólidos</option>
-              <option value="taxaDengue">Dengue</option>
-              <option value="taxaChikungunya">Chikungunya</option>
-              <option value="taxaDiarreia">Diarreia aguda</option>
+              <optgroup label="Déficit de saneamento — quanto menor, melhor">
+                <option value="deficitAgua">Déficit — Abastecimento de água</option>
+                <option value="deficitEsgoto">Déficit — Esgotamento sanitário</option>
+                <option value="deficitResiduos">Déficit — Resíduos sólidos</option>
+              </optgroup>
+              <optgroup label="Investimento (cobertura) — quanto maior, mais investido">
+                <option value="investAgua">Investimento — Abastecimento de água</option>
+                <option value="investEsgoto">Investimento — Esgotamento sanitário</option>
+                <option value="investResiduos">Investimento — Resíduos sólidos</option>
+              </optgroup>
+              <optgroup label="Saúde">
+                <option value="taxaDengue">Dengue</option>
+                <option value="taxaChikungunya">Chikungunya</option>
+                <option value="taxaDiarreia">Diarreia aguda</option>
+              </optgroup>
             </select>
           </div>
           <div class="mapa-svg-wrap">
