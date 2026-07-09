@@ -142,11 +142,8 @@ html[data-theme="dark"] .sidebar{ background:#180208; }
   color:var(--text); margin:0 0 6px;
 }
 .hero-institucional-destaque{ color:var(--bordo) !important; margin-bottom:0 !important; }
-.hero-logo-wrap{
-  background:#fff; border-radius:var(--radius); padding:44px 64px; box-shadow:var(--shadow);
-  border:1px solid var(--border); max-width:100%;
-}
-.hero-logo{ display:block; width:min(1500px, 92vw); height:auto; }
+.hero-logo-wrap{ max-width:100%; }
+.hero-logo{ display:block; width:min(1050px, 64vw); height:auto; }
 .hero-nav{ display:flex; flex-wrap:wrap; justify-content:center; gap:10px; }
 .hero-nav-btn{
   display:flex; align-items:center; gap:9px; background:var(--surface); border:1px solid var(--border);
@@ -171,7 +168,6 @@ html[data-theme="dark"] .sidebar{ background:#180208; }
   .field-compacto{ flex:1; }
   .hero-inicio{ padding:22px 10px 20px; gap:16px; }
   .hero-institucional p{ font-size:10.5px; }
-  .hero-logo-wrap{ padding:18px 22px; }
   .hero-nav-btn{ padding:9px 14px; font-size:12.5px; }
 }
 

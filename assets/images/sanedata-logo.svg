@@ -9,9 +9,6 @@
     </linearGradient>
   </defs>
 
-  <!-- Background -->
-  <rect x="0" y="55" width="800" height="200" fill="#FFFFFF"/>
-
   <!-- Left section: Logo mark -->
   <g id="logoMark">
     <!-- Main water drop shape with gradient -->
