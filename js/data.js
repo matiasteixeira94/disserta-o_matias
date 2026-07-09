@@ -8,7 +8,13 @@
    ========================================================================= */
 const INDICADORES_DEFICIT = ["deficitAgua","deficitEsgoto","deficitResiduos"];
 const INDICADORES_SAUDE   = ["taxaDengue","taxaChikungunya","taxaDiarreia"];
-const TODOS_INDICADORES   = [...INDICADORES_DEFICIT, ...INDICADORES_SAUDE];
+const TODOS_INDICADORES   = [...INDICADORES_DEFICIT, ...INDICADORES_SAUDE]; // todos os indicadores rastreados (tabelas, exportação, mapa por camada)
+/* indicadores usados no ÍNDICE COMPOSTO de priorização — deficitResiduos fica de fora
+   enquanto não houver nenhuma fonte de dado disponível (nem manual nem automatizada;
+   ver data/scripts/README.md, seção 04/04b): incluí-lo faria o índice nunca fechar
+   em nenhum município/ano, já que hoje é sempre nulo. Assim que resíduos tiver dado
+   real, basta devolvê-lo a esta lista. */
+const INDICADORES_INDICE  = ["deficitAgua","deficitEsgoto", ...INDICADORES_SAUDE];
 
 const LABELS = {
   deficitAgua:"Déficit de água", deficitEsgoto:"Déficit de esgoto", deficitResiduos:"Déficit de resíduos",
@@ -24,7 +30,20 @@ async function carregarPainel(){
   const resp = await fetch('data/processed/painel_pe.json', { cache:'no-store' });
   if(!resp.ok) throw new Error(`HTTP ${resp.status} ao buscar data/processed/painel_pe.json`);
   PAINEL = await resp.json();
-  state.ano = String(PAINEL.anoFim);
+  state.ano = anoPadrao();
+}
+
+/* ano inicial: o mais recente em que o índice composto já é calculável (pelo menos 2
+   municípios com os indicadores de INDICADORES_INDICE completos) — sem isso, o ano mais
+   recente (anoFim) apareceria "vazio" no Dashboard sempre que a fonte de dado mais nova
+   ainda não tiver saneamento apurado (ex.: 2024 no momento em que este código foi escrito).
+   Cai para anoFim se nenhum ano tiver dado suficiente ainda. */
+function anoPadrao(){
+  for(let a = PAINEL.anoFim; a >= PAINEL.anoInicio; a--){
+    const completos = comDadosCompletos(getDataset(a), INDICADORES_INDICE);
+    if(completos.length >= 2) return String(a);
+  }
+  return String(PAINEL.anoFim);
 }
 
 function anosDisponiveis(){

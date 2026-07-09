@@ -76,7 +76,7 @@ function renderInicio(){
   const semComp = m[compKey] === null || m[compKey] === undefined;
   const semSaude = m[saudeKey] === null || m[saudeKey] === undefined;
 
-  const idxData = comDadosCompletos(data, TODOS_INDICADORES);
+  const idxData = comDadosCompletos(data, INDICADORES_INDICE);
   const idx = idxData.length ? computeIndex(idxData, "igual") : [];
   const posNoIdx = idxData.indexOf(m);
   const idxRank = posNoIdx>=0 ? rankDesc(idx)[posNoIdx] : null;
@@ -90,7 +90,7 @@ function renderInicio(){
     <div class="card accent-bordo">
       <span class="card-label">Índice de priorização</span>
       <span class="card-value">${idxRank ? fmt(idx[posNoIdx],1) : '—'}</span>
-      <span class="card-sub">${idxData.length ? `de 0 a 100 · pesos iguais · ${idxData.length} municípios com os 6 indicadores completos` : 'aguardando dados completos (ver aviso abaixo)'}</span>
+      <span class="card-sub">${idxData.length ? `de 0 a 100 · pesos iguais · ${idxData.length} municípios com os ${INDICADORES_INDICE.length} indicadores do índice completos` : 'aguardando dados completos (ver aviso abaixo)'}</span>
     </div>
     <div class="card accent-terracota">
       <span class="card-label">Posição no painel (índice)</span>
@@ -303,9 +303,9 @@ function renderDashboard(){
   renderInicio(); // seção "Município em foco" (déficit x saúde de um município + dispersão) — independente do índice composto abaixo
 
   const dataAno = getDataset(state.ano);
-  const data = comDadosCompletos(dataAno, TODOS_INDICADORES);
+  const data = comDadosCompletos(dataAno, INDICADORES_INDICE);
   const hint = document.getElementById('rankingHint');
-  if(hint) hint.textContent = `— ${data.length} de ${dataAno.length} municípios de PE com os 6 indicadores completos`;
+  if(hint) hint.textContent = `— ${data.length} de ${dataAno.length} municípios de PE com os ${INDICADORES_INDICE.length} indicadores do índice completos`;
 
   const cardsHost = document.getElementById('cardsDashboard');
   const rankHost = document.getElementById('rankingList');
@@ -320,7 +320,7 @@ function renderDashboard(){
   }
   if(data.length < 2){
     clear2(cardsHost);
-    cardsHost.innerHTML = placeholderHTML('Índice ainda não calculável', avisoSaneamento('deficitResiduos') + ' O índice composto precisa dos 6 indicadores (3 de saneamento + 3 de saúde) em pelo menos 2 municípios para gerar um ranking.');
+    cardsHost.innerHTML = placeholderHTML('Índice ainda não calculável', `O índice composto precisa dos ${INDICADORES_INDICE.length} indicadores (água, esgoto, dengue, chikungunya, diarreia) em pelo menos 2 municípios para gerar um ranking, e nenhum município tem essa combinação neste ano. ` + avisoSaneamento('deficitEsgoto'));
     rankHost.innerHTML = ""; clear(svgDecomp);
     renderMapa('mapaDashboard', dataAno, null, -1, null);
     document.getElementById('topMunicipioNome').textContent = '';
@@ -374,14 +374,14 @@ function renderDashboard(){
   /* decomposição do índice do município #1 */
   clear(svgDecomp);
   document.getElementById('topMunicipioNome').textContent = `${top.m.nome}-${top.m.uf}`;
-  const matrix = buildMatrix(data);
+  const matrix = buildMatrix(data, INDICADORES_INDICE);
   const weights = computeWeights(state.peso, matrix);
   const topIdxPos = data.indexOf(top.m);
-  const contribs = TODOS_INDICADORES.map((k,j)=> matrix[topIdxPos][j]*weights[j]*100);
+  const contribs = INDICADORES_INDICE.map((k,j)=> matrix[topIdxPos][j]*weights[j]*100);
   const W=480,H=200,padL=140,padR=50,padT=10;
   const barH = 22, gapY = 10;
   const maxC = Math.max(...contribs)*1.15 || 1;
-  TODOS_INDICADORES.forEach((k,i)=>{
+  INDICADORES_INDICE.forEach((k,i)=>{
     const y = padT + i*(barH+gapY);
     const w = (contribs[i]/maxC) * (W-padL-padR);
     const isSaude = INDICADORES_SAUDE.includes(k);
@@ -412,7 +412,7 @@ const COLUNAS_RELATORIO = [
 
 function calcularLinhasRelatorio(){
   const dataAno = getDataset(state.ano);
-  const completos = comDadosCompletos(dataAno, TODOS_INDICADORES);
+  const completos = comDadosCompletos(dataAno, INDICADORES_INDICE);
   let ordenados = [];
   if(completos.length){
     const idx = computeIndex(completos, state.peso || "igual");
@@ -442,7 +442,7 @@ function desenharRankingBarras(svg, itens){
   const H = Math.max(padT + itens.length*(rowH+gapY), 60);
   svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
   if(!itens.length){
-    svg.appendChild(svgTexto("Nenhum município com os 6 indicadores completos neste ano — ver aviso na Tela Inicial.", W, H));
+    svg.appendChild(svgTexto(`Nenhum município com os ${INDICADORES_INDICE.length} indicadores do índice completos neste ano.`, W, H));
     return;
   }
   const maxVal = Math.max(...itens.map(o=>o.indice)) * 1.15 || 1;
@@ -483,7 +483,7 @@ function renderRelatorios(){
     <div class="card accent-bordo">
       <span class="card-label">Municípios no relatório</span>
       <span class="card-value">${dataAno.length}</span>
-      <span class="card-sub">${comIndice.length} com os 6 indicadores completos · ${dataAno.length-comIndice.length} sem índice calculável</span>
+      <span class="card-sub">${comIndice.length} com os ${INDICADORES_INDICE.length} indicadores do índice completos · ${dataAno.length-comIndice.length} sem índice calculável</span>
     </div>
     <div class="card accent-terracota">
       <span class="card-label">Ano de referência</span>
@@ -498,8 +498,8 @@ function renderRelatorios(){
 
   desenharRankingBarras(chartHost, comIndice.slice(0,15));
   if(hintHost) hintHost.textContent = comIndice.length
-    ? `— top ${Math.min(15,comIndice.length)} de ${comIndice.length} municípios com os 6 indicadores completos`
-    : "— nenhum município com os 6 indicadores completos ainda";
+    ? `— top ${Math.min(15,comIndice.length)} de ${comIndice.length} municípios com os ${INDICADORES_INDICE.length} indicadores do índice completos`
+    : `— nenhum município com os ${INDICADORES_INDICE.length} indicadores do índice completos ainda`;
 
   tabelaHost.innerHTML = construirTabelaHTML(linhas);
 }
@@ -596,7 +596,7 @@ function renderComparacoes(){
     return vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : null;
   };
 
-  const completos = comDadosCompletos(dataAno, TODOS_INDICADORES);
+  const completos = comDadosCompletos(dataAno, INDICADORES_INDICE);
   const idxTodos = completos.length ? computeIndex(completos, state.peso || "igual") : [];
   const idxDe = (m) => { const pos = completos.indexOf(m); return pos>=0 ? idxTodos[pos] : null; };
   const idxA = idxDe(A), idxB = idxDe(B);
@@ -617,7 +617,7 @@ function renderComparacoes(){
     <div class="card accent-ambar">
       <span class="card-label">Diferença de índice</span>
       <span class="card-value">${(idxA===null||idxB===null) ? "—" : fmt(Math.abs(idxA-idxB),1)}</span>
-      <span class="card-sub">${(idxA===null||idxB===null) ? "precisa dos 6 indicadores nos dois municípios" : (idxA>idxB ? `${A.nome} prioriza mais` : idxB>idxA ? `${B.nome} prioriza mais` : "empate")}</span>
+      <span class="card-sub">${(idxA===null||idxB===null) ? `precisa dos ${INDICADORES_INDICE.length} indicadores do índice nos dois municípios` : (idxA>idxB ? `${A.nome} prioriza mais` : idxB>idxA ? `${B.nome} prioriza mais` : "empate")}</span>
     </div>`;
 
   desenharBarrasAgrupadas(svgSan, INDICADORES_DEFICIT, [

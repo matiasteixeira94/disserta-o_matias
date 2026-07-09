@@ -99,7 +99,7 @@ function rotuloCamada(camada){ return camada === 'indice' ? 'Índice de prioriza
 function valoresPorCamada(dataAno, camada){
   const mapa = new Map();
   if(camada === 'indice'){
-    const completos = comDadosCompletos(dataAno, TODOS_INDICADORES);
+    const completos = comDadosCompletos(dataAno, INDICADORES_INDICE);
     if(completos.length){
       const idx = computeIndex(completos, state.peso || 'igual');
       completos.forEach((m,i) => mapa.set(m.codigo, idx[i]));

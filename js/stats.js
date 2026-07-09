@@ -5,9 +5,10 @@ function normalizeCol(data, key){
   const [mn,mx] = minMax(vals);
   return vals.map(v => (mx-mn) ? (v-mn)/(mx-mn) : 0);
 }
-function buildMatrix(data){
-  const cols = TODOS_INDICADORES.map(k => normalizeCol(data,k));
-  return data.map((_,i) => TODOS_INDICADORES.map((_,j)=>cols[j][i]));
+function buildMatrix(data, indicadores){
+  const chaves = indicadores || INDICADORES_INDICE;
+  const cols = chaves.map(k => normalizeCol(data,k));
+  return data.map((_,i) => chaves.map((_,j)=>cols[j][i]));
 }
 function equalWeights(m){ return new Array(m).fill(1/m); }
 function entropyWeights(matrix){
@@ -47,8 +48,8 @@ function computeWeights(scheme, matrix){
   if(scheme==="pca") return pcaWeights(matrix);
   return equalWeights(matrix[0].length);
 }
-function computeIndex(data, scheme){
-  const matrix = buildMatrix(data);
+function computeIndex(data, scheme, indicadores){
+  const matrix = buildMatrix(data, indicadores);
   const w = computeWeights(scheme, matrix);
   return matrix.map(row => row.reduce((acc,val,idx)=>acc+val*w[idx],0)*100);
 }
