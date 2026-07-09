@@ -47,7 +47,10 @@ function popularSelectMunicipios(data){
   state.municipioIdx = idx >= 0 ? idx : 0;
 }
 
-/* ============ RENDER: TELA INICIAL ============ */
+/* ============ RENDER: MUNICÍPIO EM FOCO (seção do Dashboard) ============
+   Mantém o nome renderInicio por ora — renderiza a seção "Município em foco"
+   do Dashboard (cards, comparação com a média, mapa esquemático e a
+   correlação/dispersão déficit×saúde), chamada a partir de renderDashboard(). */
 function renderInicio(){
   const data = getDataset(state.ano);
   const cardsHost = document.getElementById('cardsInicio');
@@ -297,6 +300,8 @@ function renderMapa(svgId, todos, idxValues, highlightPos, idxData){
 
 /* ============ RENDER: DASHBOARD ============ */
 function renderDashboard(){
+  renderInicio(); // seção "Município em foco" (déficit x saúde de um município + dispersão) — independente do índice composto abaixo
+
   const dataAno = getDataset(state.ano);
   const data = comDadosCompletos(dataAno, TODOS_INDICADORES);
   const hint = document.getElementById('rankingHint');

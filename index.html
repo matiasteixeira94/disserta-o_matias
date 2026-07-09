@@ -62,6 +62,16 @@
         <h1 id="pageTitle">Tela Inicial</h1>
         <span class="badge-proto">Fontes oficiais · IBGE · SINAN/SIH · SINISA/SNIS</span>
       </div>
+      <div class="topbar-filtros">
+        <div class="field field-compacto">
+          <label for="selMunicipio">Município</label>
+          <select id="selMunicipio"></select>
+        </div>
+        <div class="field field-compacto">
+          <label for="selAno">Ano</label>
+          <select id="selAno"></select>
+        </div>
+      </div>
     </header>
 
     <!-- ===================== TELA INICIAL ===================== -->
@@ -98,15 +108,19 @@
           </button>
         </nav>
       </div>
+      <div class="hero-erro" id="heroErro"></div>
+    </section>
 
+    <!-- ===================== DASHBOARD ===================== -->
+    <section id="view-dashboard" class="view">
       <div class="filter-bar">
         <div class="field">
-          <label for="selMunicipio">Município</label>
-          <select id="selMunicipio"></select>
-        </div>
-        <div class="field">
-          <label for="selAno">Ano de referência</label>
-          <select id="selAno"></select>
+          <span class="field-label">Esquema de ponderação do índice</span>
+          <div class="pills" id="pillsPeso">
+            <button class="pill active" data-peso="igual">Pesos iguais</button>
+            <button class="pill" data-peso="entropia">Entropia de Shannon</button>
+            <button class="pill" data-peso="pca">PCA (1º componente)</button>
+          </div>
         </div>
         <div class="field">
           <label for="selIndicador">Indicador de saúde</label>
@@ -124,6 +138,28 @@
             <option value="deficitResiduos">Déficit — Resíduos sólidos</option>
           </select>
         </div>
+      </div>
+
+      <div class="cards-row" id="cardsDashboard"></div>
+
+      <div class="grid-2">
+        <div class="panel">
+          <h2>Ranking de priorização <span class="hint" id="rankingHint">— municípios de Pernambuco</span></h2>
+          <div id="rankingList" class="ranking-list"></div>
+        </div>
+        <div class="panel">
+          <h2>Mapa de calor de prioridade <span class="hint">— esquemático, não geográfico</span></h2>
+          <svg id="mapaDashboard" viewBox="0 0 100 100" role="img" aria-label="Mapa de calor esquemático de prioridade por município"></svg>
+        </div>
+      </div>
+
+      <div class="panel panel-wide">
+        <h2>Decomposição do índice — <span id="topMunicipioNome"></span></h2>
+        <svg id="chartDecomposicao" viewBox="0 0 480 200" role="img" aria-label="Decomposição do índice de priorização por indicador"></svg>
+      </div>
+
+      <div class="secao-divisor">
+        <h2>Município em foco <span class="hint">— use os seletores de Município/Ano no topo da página</span></h2>
       </div>
 
       <div class="cards-row" id="cardsInicio"></div>
@@ -152,38 +188,6 @@
           <h2>Dispersão — déficit × indicador de saúde <span class="hint" id="corrChartHint">— todos os municípios de PE, no ano selecionado</span></h2>
           <svg id="chartCorrelacaoDispersao" viewBox="0 0 420 230" role="img" aria-label="Gráfico de dispersão do déficit de saneamento contra o indicador de saúde selecionado, um ponto por município, com linha de tendência e o município selecionado destacado"></svg>
         </div>
-      </div>
-    </section>
-
-    <!-- ===================== DASHBOARD ===================== -->
-    <section id="view-dashboard" class="view">
-      <div class="filter-bar">
-        <div class="field">
-          <span class="field-label">Esquema de ponderação do índice</span>
-          <div class="pills" id="pillsPeso">
-            <button class="pill active" data-peso="igual">Pesos iguais</button>
-            <button class="pill" data-peso="entropia">Entropia de Shannon</button>
-            <button class="pill" data-peso="pca">PCA (1º componente)</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="cards-row" id="cardsDashboard"></div>
-
-      <div class="grid-2">
-        <div class="panel">
-          <h2>Ranking de priorização <span class="hint" id="rankingHint">— municípios de Pernambuco</span></h2>
-          <div id="rankingList" class="ranking-list"></div>
-        </div>
-        <div class="panel">
-          <h2>Mapa de calor de prioridade <span class="hint">— esquemático, não geográfico</span></h2>
-          <svg id="mapaDashboard" viewBox="0 0 100 100" role="img" aria-label="Mapa de calor esquemático de prioridade por município"></svg>
-        </div>
-      </div>
-
-      <div class="panel panel-wide">
-        <h2>Decomposição do índice — <span id="topMunicipioNome"></span></h2>
-        <svg id="chartDecomposicao" viewBox="0 0 480 200" role="img" aria-label="Decomposição do índice de priorização por indicador"></svg>
       </div>
     </section>
 
@@ -238,7 +242,7 @@
         </div>
       </div>
 
-      <p class="scope-note">Relatório gerado a partir de <code>data/processed/painel_pe.json</code> para o ano <strong id="relAno"></strong> — sem nenhum valor estimado: indicadores ainda não apurados aparecem como "—" e ficam de fora do índice de priorização. Para trocar o ano ou o esquema de pesos, use os seletores da Tela Inicial e do Dashboard.</p>
+      <p class="scope-note">Relatório gerado a partir de <code>data/processed/painel_pe.json</code> para o ano <strong id="relAno"></strong> — sem nenhum valor estimado: indicadores ainda não apurados aparecem como "—" e ficam de fora do índice de priorização. Para trocar o ano, use o seletor no topo da página; para o esquema de pesos, use os seletores do Dashboard.</p>
 
       <div class="cards-row" id="cardsRelatorio"></div>
 
@@ -268,7 +272,7 @@
         </div>
       </div>
 
-      <p class="scope-note">Comparação entre municípios de Pernambuco no ano <strong id="compAno"></strong> (o mesmo selecionado na Tela Inicial). Comparação com municípios de outros estados/regiões exigiria bases de dados fora do recorte geográfico desta pesquisa (ver <code>data/scripts/README.md</code>) e por isso não está disponível aqui.</p>
+      <p class="scope-note">Comparação entre municípios de Pernambuco no ano <strong id="compAno"></strong> (o mesmo selecionado no topo da página). Comparação com municípios de outros estados/regiões exigiria bases de dados fora do recorte geográfico desta pesquisa (ver <code>data/scripts/README.md</code>) e por isso não está disponível aqui.</p>
 
       <div class="cards-row" id="cardsComparacao"></div>
 

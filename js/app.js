@@ -1,16 +1,21 @@
 /* ============ NAVEGAÇÃO ============ */
+let currentView = 'inicio';
+function renderCurrentView(){
+  if(currentView==='dashboard') renderDashboard();
+  if(currentView==='mapa') renderMapaGeo();
+  if(currentView==='relatorios') renderRelatorios();
+  if(currentView==='comparacoes') renderComparacoes();
+  // 'inicio' é só a tela de abertura (institucional + logo + navegação), sem conteúdo dinâmico
+}
 function setView(view){
+  currentView = view;
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.getElementById('view-'+view).classList.add('active');
   document.querySelectorAll('.nav-item, .hero-nav-btn').forEach(b=>b.classList.toggle('active', b.dataset.view===view));
   const titles = {inicio:'Tela Inicial', dashboard:'Dashboard', mapa:'Mapa', relatorios:'Relatórios', comparacoes:'Comparações'};
   document.getElementById('pageTitle').textContent = titles[view] || '';
   closeMobileMenu();
-  if(view==='inicio') renderInicio();
-  if(view==='dashboard') renderDashboard();
-  if(view==='mapa') renderMapaGeo();
-  if(view==='relatorios') renderRelatorios();
-  if(view==='comparacoes') renderComparacoes();
+  renderCurrentView();
 }
 
 document.getElementById('nav').addEventListener('click', (e)=>{
@@ -45,7 +50,7 @@ btnTheme.addEventListener('click', ()=>{
   btnTheme.setAttribute('aria-pressed', String(!isDark));
 });
 
-/* ============ FILTROS — TELA INICIAL ============ */
+/* ============ FILTROS — MUNICÍPIO/ANO (globais, no topo da página) E INDICADOR/COMPONENTE (Dashboard) ============ */
 ['selMunicipio','selAno','selIndicador','selComponente'].forEach(id=>{
   document.getElementById(id).addEventListener('change', (e)=>{
     if(id==='selMunicipio') state.municipioIdx = Number(e.target.value);
@@ -55,7 +60,7 @@ btnTheme.addEventListener('click', ()=>{
     }
     if(id==='selIndicador') state.indicador = e.target.value;
     if(id==='selComponente') state.componente = e.target.value;
-    renderInicio();
+    renderCurrentView();
   });
 });
 
@@ -105,7 +110,7 @@ function popularSelectAnos(){
 }
 
 function mostrarErroCarregamento(erro){
-  document.getElementById('cardsInicio').innerHTML =
+  document.getElementById('heroErro').innerHTML =
     `<div class="placeholder-box"><h2>Não foi possível carregar os dados</h2>` +
     `<p>Falha ao buscar <code>data/processed/painel_pe.json</code> (${erro.message}). ` +
     `Rode o pipeline em <code>data/scripts/</code> (veja <code>data/scripts/README.md</code>) e sirva a pasta por HTTP ` +
@@ -126,6 +131,5 @@ async function iniciar(){
   }
   popularSelectAnos();
   popularSelectMunicipios(getDataset(state.ano));
-  renderInicio();
 }
 iniciar();
