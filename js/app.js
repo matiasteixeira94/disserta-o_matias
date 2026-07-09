@@ -78,6 +78,10 @@ document.getElementById('selCamadaMapa').addEventListener('change', (e)=>{
   state.mapaCamada = e.target.value;
   renderMapaGeo();
 });
+document.getElementById('selMunicipioMapa').addEventListener('change', (e)=>{
+  mapaSelecionado = e.target.value ? Number(e.target.value) : null;
+  renderMapaGeo();
+});
 
 /* ============ FILTROS — COMPARAÇÕES ============ */
 document.getElementById('selCompA').addEventListener('change', (e)=>{

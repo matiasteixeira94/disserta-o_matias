@@ -110,6 +110,18 @@ function valoresPorCamada(dataAno, camada){
   return mapa;
 }
 
+/* busca por nome — o roster de municípios é o mesmo em todos os anos (só o valor dos
+   indicadores muda), então as opções não precisam ser refeitas a cada troca de ano */
+function popularSelectMunicipioMapa(dataAno){
+  const sel = document.getElementById('selMunicipioMapa');
+  if(!sel || sel.options.length > 1) return;
+  dataAno.forEach(m=>{
+    const opt = document.createElement('option');
+    opt.value = m.codigo; opt.textContent = `${m.nome} — ${m.uf}`;
+    sel.appendChild(opt);
+  });
+}
+
 /* ============ RENDER ============ */
 function renderMapaGeo(){
   const svg = document.getElementById('mapaGeografico');
@@ -117,6 +129,12 @@ function renderMapaGeo(){
   const hintHost = document.getElementById('mapaCamadaHint');
   const infoHost = document.getElementById('mapaInfoMunicipio');
   if(!svg) return;
+
+  const selMapa = document.getElementById('selMunicipioMapa');
+  if(selMapa){
+    popularSelectMunicipioMapa(getDataset(state.ano));
+    selMapa.value = mapaSelecionado !== null ? String(mapaSelecionado) : '';
+  }
 
   if(malhaErro){
     svg.parentElement.innerHTML = placeholderHTML('Não foi possível carregar a malha geográfica',
