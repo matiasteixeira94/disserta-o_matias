@@ -29,6 +29,7 @@ PASSOS = [
     "03_sih_diarreia.py",
     "04_sinisa_saneamento.py",
     "04a_sinisa_basedosdados.py",
+    "04b_sinisa_dashboard_publico.py",
     "05_build_painel.py",
     "06_ibge_malha_municipios.py",
 ]

@@ -18,7 +18,19 @@ function layoutXY(i, n){
 function placeholderHTML(titulo, texto){
   return `<div class="placeholder-box"><h2>${titulo}</h2><p>${texto}</p></div>`;
 }
-const AVISO_SANEAMENTO = "O déficit de saneamento (SINISA/SNIS) ainda não foi importado para este painel — rode data/scripts/04_sinisa_saneamento.py após baixar a série histórica oficial (ver data/scripts/README.md). Os indicadores de saúde já refletem dados reais de SINAN/SIH-SUS.";
+/* mensagem sobre lacuna de dado de saneamento, adaptada ao componente — a cobertura real
+   difere muito entre os três (água tem série quase completa 2015-2023; esgoto é parcial
+   mesmo nos anos cobertos; resíduos não tem nenhuma fonte automatizada ainda). */
+function avisoSaneamento(compKey){
+  if(compKey === "deficitResiduos"){
+    return 'O déficit de resíduos sólidos ainda não tem fonte automatizada: nem a Base dos Dados (BigQuery) nem o novo Painel de Indicadores do SINISA publicam esse indicador — o módulo de resíduos do SINISA está marcado como "em breve" pelo próprio Ministério das Cidades. Só o passo manual (data/scripts/README.md, seção 04) pode preenchê-lo quando for disponibilizado.';
+  }
+  if(compKey === "deficitAgua" || compKey === "deficitEsgoto"){
+    const nome = compKey === "deficitAgua" ? "água" : "esgoto";
+    return `O déficit de ${nome} ainda não foi apurado para este ano/município. A série automatizada cobre 2015-2022 (Base dos Dados/SNIS, data/scripts/04a) e, só para água, também 2023 (Painel de Indicadores do SINISA, data/scripts/04b) — 2024 e o componente de esgoto após 2022 continuam exigindo o passo manual (data/scripts/README.md, seção 04).`;
+  }
+  return "O déficit de saneamento ainda não foi importado para este painel — ver data/scripts/README.md.";
+}
 
 /* ============ POPULAR SELECT DE MUNICÍPIOS (depende do ano, refeito a cada troca) ============ */
 function popularSelectMunicipios(data){
@@ -96,7 +108,7 @@ function renderInicio(){
   /* gráfico de comparação (barras SVG) — só quando há os dois valores para o município */
   clear(svgComp);
   if(semComp || semSaude){
-    const aviso = semComp ? AVISO_SANEAMENTO : `Sem notificações/internações apuradas para "${LABELS[saudeKey]}" em ${m.nome} neste ano.`;
+    const aviso = semComp ? avisoSaneamento(compKey) : `Sem notificações/internações apuradas para "${LABELS[saudeKey]}" em ${m.nome} neste ano.`;
     svgComp.appendChild(svgTexto(aviso, 420, 230));
   } else {
     const mediaComp = completosAmbos.reduce((a,b)=>a+b[compKey],0)/completosAmbos.length;
@@ -113,10 +125,11 @@ function renderInicio(){
   const chartCorr = document.getElementById('chartCorrelacaoDispersao');
   const chartCorrHint = document.getElementById('corrChartHint');
   if(completosAmbos.length < 4){
+    const avisoFalta = semComp ? avisoSaneamento(compKey) : '';
     corrHost.textContent = '—';
-    textoHost.textContent = `Dados insuficientes para calcular a correlação (${completosAmbos.length} município(s) com ambos os indicadores apurados; são necessários ao menos 4). ${semComp ? AVISO_SANEAMENTO : ''}`;
+    textoHost.textContent = `Dados insuficientes para calcular a correlação (${completosAmbos.length} município(s) com ambos os indicadores apurados; são necessários ao menos 4). ${avisoFalta}`;
     clear(chartCorr);
-    chartCorr.appendChild(svgTexto(`Dados insuficientes para o gráfico de dispersão (mínimo de 4 municípios com os dois indicadores apurados).`, 420, 230));
+    chartCorr.appendChild(svgTexto(`Dados insuficientes para o gráfico de dispersão (mínimo de 4 municípios com os dois indicadores apurados). ${avisoFalta}`, 420, 230));
     chartCorrHint.textContent = '';
   } else {
     const compVals = completosAmbos.map(d=>d[compKey]);
@@ -302,7 +315,7 @@ function renderDashboard(){
   }
   if(data.length < 2){
     clear2(cardsHost);
-    cardsHost.innerHTML = placeholderHTML('Índice ainda não calculável', AVISO_SANEAMENTO + ' O índice composto precisa dos 6 indicadores (3 de saneamento + 3 de saúde) em pelo menos 2 municípios para gerar um ranking.');
+    cardsHost.innerHTML = placeholderHTML('Índice ainda não calculável', avisoSaneamento('deficitResiduos') + ' O índice composto precisa dos 6 indicadores (3 de saneamento + 3 de saúde) em pelo menos 2 municípios para gerar um ranking.');
     rankHost.innerHTML = ""; clear(svgDecomp);
     renderMapa('mapaDashboard', dataAno, null, -1, null);
     document.getElementById('topMunicipioNome').textContent = '';

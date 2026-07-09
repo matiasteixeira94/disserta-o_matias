@@ -156,6 +156,50 @@ passo 04. O passo 04, por sua vez, também foi ajustado para fazer merge
 (não sobrescrever), então a ordem entre 04 e 04a no `run_pipeline.py` não
 importa para não perder dado.
 
+### 04b — Água via o Painel de Indicadores público do SINISA — automatizado, só água
+Segundo complemento automatizado: o novo Painel de Indicadores do SINISA
+(`indicadores-sinisa-2025.cidades.gov.br`, sucessor do antigo app de Série
+Histórica que saiu do ar) expõe, na própria rota pública `/dashboard?modulo=agua`
+— sem login —, os indicadores por município já embutidos no HTML da página
+(payload Inertia.js), incluindo `IAG0001` ("Atendimento da população total
+com rede de abastecimento de água"), o mesmo conceito do IN023 usado no 04a.
+Verificado antes de escrever o script (não presumido):
+
+- **Só o módulo água tem indicador comparável ao IN023.** O módulo esgoto
+  (`modulo=esgoto`) existe e está habilitado, mas o único indicador de
+  atendimento que publica (`IES0001`) é referido à população **total**,
+  diferente da base usada no 04a para esgoto (`indice_coleta_esgoto`,
+  referido à população atendida com água) — misturar as duas na mesma
+  coluna `deficitEsgoto` criaria uma quebra metodológica não documentada
+  dentro de uma única série. Por isso o 04b só importa água; esgoto por
+  este canal fica para trabalho futuro que assuma essa mudança de definição
+  explicitamente (ou grave em coluna separada).
+- **O módulo resíduos sólidos existe no código do front-end do painel, mas
+  está desabilitado** ("Módulos disponíveis em breve", confirmado lendo o
+  bundle JS da página inicial) — não publica nenhum dado ainda.
+  `deficitResiduos` continua exigindo o passo manual (04) quando/se for
+  disponibilizado.
+- **O ano-base não vem como campo estruturado na API** — só como texto na
+  página inicial ("dados do ano base 2023" no momento em que este script foi
+  escrito). O script extrai esse ano do texto em tempo de execução (em vez
+  de fixá-lo no código) para continuar correto quando o SINISA publicar um
+  novo ciclo; se o texto mudar de formato, o script para com erro em vez de
+  adivinhar o ano.
+- **Possível quebra de nível entre 2022 (Base dos Dados/SNIS) e 2023
+  (painel público/SINISA)** para o mesmo município — consistente com a
+  descontinuação do SNIS e sucessão pelo SINISA em 2024 (mudança
+  institucional documentada publicamente, não um bug deste script), mas
+  quem for interpretar a série 2015-2024 completa deve tratar esse salto
+  como possível efeito de metodologia, não necessariamente uma mudança real
+  de cobertura.
+- A rota exige um cookie de sessão já iniciado (visitar `/` antes) e um
+  `User-Agent` de navegador — uma requisição "crua" (sem esses dois) é
+  barrada pelo WAF na frente do portal com HTTP 500.
+
+Não precisa de nenhuma credencial. Faz merge com
+`data/processed/saneamento_pe.csv` do mesmo jeito que o 04a (só preenche
+`deficitAgua` onde ainda está nulo).
+
 ### 05 — Junção final
 Junta as quatro fontes por `(codigo_ibge, ano)`, calcula as taxas de saúde
 por 100 mil habitantes e grava `data/processed/painel_pe.json`, que é o
