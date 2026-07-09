@@ -14,9 +14,10 @@ const LABELS = {
   deficitAgua:"Déficit de água", deficitEsgoto:"Déficit de esgoto", deficitResiduos:"Déficit de resíduos",
   taxaDengue:"Dengue", taxaChikungunya:"Chikungunya", taxaDiarreia:"Diarreia aguda"
 };
+const LABEL_PESO = { igual:"pesos iguais", entropia:"entropia de Shannon", pca:"PCA (1º componente)" };
 
 let PAINEL = null; // payload bruto de data/processed/painel_pe.json
-let state = { ano:null, indicador:"taxaDengue", componente:"deficitAgua", municipioIdx:0, peso:"igual", mapaCamada:"indice" };
+let state = { ano:null, indicador:"taxaDengue", componente:"deficitAgua", municipioIdx:0, peso:"igual", mapaCamada:"indice", compA:0, compB:1 };
 
 /* ============ CARREGAMENTO DOS DADOS REAIS ============ */
 async function carregarPainel(){

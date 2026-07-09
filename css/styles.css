@@ -244,6 +244,29 @@ html[data-theme="dark"] .sidebar{ background:#180208; }
 .mapa-tabela-detalhe td:first-child{ color:var(--text-muted); }
 .mapa-tabela-detalhe td:last-child{ text-align:right; font-family:var(--font-mono); font-weight:600; }
 
+/* ============ NOTA DE ESCOPO ============ */
+.scope-note{ font-size:12.5px; color:var(--text-muted); margin-bottom:18px; line-height:1.6; max-width:900px; }
+.scope-note code{ font-family:var(--font-mono); background:var(--surface-alt); padding:1px 5px; border-radius:4px; }
+
+/* ============ AÇÕES / EXPORTAÇÃO ============ */
+.actions-row{ display:flex; flex-wrap:wrap; gap:10px; }
+.btn-export{
+  background:var(--surface-alt); border:1px solid var(--border); color:var(--text);
+  padding:9px 16px; border-radius:9px; cursor:pointer; font-weight:600; font-size:13px; white-space:nowrap;
+}
+.btn-export:hover{ border-color:var(--bordo-claro); color:var(--bordo); }
+.btn-export.btn-export-primary{ background:var(--bordo); border-color:var(--bordo); color:#fff; }
+.btn-export.btn-export-primary:hover{ background:var(--bordo-hover); color:#fff; }
+
+/* ============ TABELA DE RELATÓRIO / COMPARAÇÃO ============ */
+.table-scroll{ overflow-x:auto; }
+.tabela-relatorio{ width:100%; border-collapse:collapse; font-size:12.5px; white-space:nowrap; }
+.tabela-relatorio th, .tabela-relatorio td{ padding:8px 12px; border-bottom:1px solid var(--border); text-align:right; font-family:var(--font-mono); }
+.tabela-relatorio th:first-child, .tabela-relatorio td:first-child,
+.tabela-relatorio th:nth-child(2), .tabela-relatorio td:nth-child(2){ text-align:left; font-family:var(--font-body); }
+.tabela-relatorio thead th{ font-size:11px; text-transform:uppercase; letter-spacing:.03em; color:var(--text-muted); background:var(--surface-alt); font-family:var(--font-body); position:sticky; top:0; }
+.tabela-relatorio tbody tr:nth-child(odd){ background:var(--surface-alt); }
+
 /* ============ PLACEHOLDER VIEWS ============ */
 .placeholder-box{
   background:var(--surface); border:1px dashed var(--border); border-radius:var(--radius);
@@ -274,4 +297,14 @@ html[data-theme="dark"] .sidebar{ background:#180208; }
 }
 @media (max-width: 460px){
   .cards-row{ grid-template-columns:1fr; }
+}
+
+/* ============ IMPRESSÃO (Relatórios → Imprimir / salvar PDF) ============ */
+@media print{
+  .sidebar, .topbar, .hero-inicio, .filter-bar, .actions-row, .scope-note, .overlay{ display:none !important; }
+  body{ background:#fff; color:#000; }
+  .main{ display:block; }
+  .view{ display:none !important; padding:0; }
+  .view.active{ display:block !important; }
+  .panel, .card{ box-shadow:none; border:1px solid #ccc; break-inside:avoid; }
 }

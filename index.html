@@ -36,13 +36,13 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 4 3 6.5v14L9 18l6 2.5 6-2.5v-14L15 6.5 9 4Z"/><path d="M9 4v14M15 6.5v14"/></svg>
         Mapa
       </button>
-      <button class="nav-item disabled" data-view="relatorios">
+      <button class="nav-item" data-view="relatorios">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3h9l5 5v13H6z"/><path d="M9 12h6M9 16h6M9 8h2"/></svg>
-        Relatórios <span class="soon">em breve</span>
+        Relatórios
       </button>
-      <button class="nav-item disabled" data-view="comparacoes">
+      <button class="nav-item" data-view="comparacoes">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10M10 20V4M16 20v-7M22 20V13"/></svg>
-        Comparações <span class="soon">em breve</span>
+        Comparações
       </button>
     </nav>
 
@@ -83,13 +83,13 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 4 3 6.5v14L9 18l6 2.5 6-2.5v-14L15 6.5 9 4Z"/><path d="M9 4v14M15 6.5v14"/></svg>
             Mapa
           </button>
-          <button class="hero-nav-btn disabled" data-view="relatorios">
+          <button class="hero-nav-btn" data-view="relatorios">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3h9l5 5v13H6z"/><path d="M9 12h6M9 16h6M9 8h2"/></svg>
-            Relatórios <span class="soon">em breve</span>
+            Relatórios
           </button>
-          <button class="hero-nav-btn disabled" data-view="comparacoes">
+          <button class="hero-nav-btn" data-view="comparacoes">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10M10 20V4M16 20v-7M22 20V13"/></svg>
-            Comparações <span class="soon">em breve</span>
+            Comparações
           </button>
         </nav>
       </div>
@@ -211,17 +211,74 @@
       </div>
     </section>
 
-    <!-- ===================== PLACEHOLDERS ===================== -->
+    <!-- ===================== RELATÓRIOS ===================== -->
     <section id="view-relatorios" class="view">
-      <div class="placeholder-box">
-        <h2>Relatórios</h2>
-        <p>Em desenvolvimento — exportação em PDF, Excel, CSV e imagem, conforme especificado. Fora do recorte validado para esta entrega.</p>
+      <div class="filter-bar">
+        <div class="field">
+          <span class="field-label">Ano do relatório</span>
+          <span class="badge-proto" id="relAnoBadge"></span>
+        </div>
+        <div class="field">
+          <span class="field-label">Exportar</span>
+          <div class="actions-row">
+            <button class="btn-export" id="btnExportCSV">Baixar CSV</button>
+            <button class="btn-export" id="btnExportExcel">Baixar Excel</button>
+            <button class="btn-export" id="btnExportPNG">Baixar ranking (imagem)</button>
+            <button class="btn-export btn-export-primary" id="btnImprimir">Imprimir / salvar PDF</button>
+          </div>
+        </div>
+      </div>
+
+      <p class="scope-note">Relatório gerado a partir de <code>data/processed/painel_pe.json</code> para o ano <strong id="relAno"></strong> — sem nenhum valor estimado: indicadores ainda não apurados aparecem como "—" e ficam de fora do índice de priorização. Para trocar o ano ou o esquema de pesos, use os seletores da Tela Inicial e do Dashboard.</p>
+
+      <div class="cards-row" id="cardsRelatorio"></div>
+
+      <div class="panel panel-wide">
+        <h2>Ranking de priorização <span class="hint" id="relRankingHint"></span></h2>
+        <svg id="chartRankingRelatorio" viewBox="0 0 480 60" role="img" aria-label="Gráfico de barras do ranking de priorização, do maior para o menor"></svg>
+      </div>
+
+      <div class="panel panel-wide">
+        <h2>Tabela completa <span class="hint">— todos os municípios de PE no ano selecionado</span></h2>
+        <div class="table-scroll">
+          <table class="tabela-relatorio" id="tabelaRelatorio"></table>
+        </div>
       </div>
     </section>
+
+    <!-- ===================== COMPARAÇÕES ===================== -->
     <section id="view-comparacoes" class="view">
-      <div class="placeholder-box">
-        <h2>Comparações</h2>
-        <p>Em desenvolvimento — comparação lado a lado entre municípios, estados e regiões. Fora do recorte validado para esta entrega.</p>
+      <div class="filter-bar">
+        <div class="field">
+          <label for="selCompA">Município A</label>
+          <select id="selCompA"></select>
+        </div>
+        <div class="field">
+          <label for="selCompB">Município B</label>
+          <select id="selCompB"></select>
+        </div>
+      </div>
+
+      <p class="scope-note">Comparação entre municípios de Pernambuco no ano <strong id="compAno"></strong> (o mesmo selecionado na Tela Inicial). Comparação com municípios de outros estados/regiões exigiria bases de dados fora do recorte geográfico desta pesquisa (ver <code>data/scripts/README.md</code>) e por isso não está disponível aqui.</p>
+
+      <div class="cards-row" id="cardsComparacao"></div>
+
+      <div class="grid-2">
+        <div class="panel">
+          <h2>Saneamento <span class="hint">déficit (%) — quanto menor, melhor</span></h2>
+          <svg id="chartCompSaneamento" viewBox="0 0 420 210" role="img" aria-label="Comparação dos indicadores de saneamento entre os dois municípios e a média do painel"></svg>
+        </div>
+        <div class="panel">
+          <h2>Saúde <span class="hint">casos/internações por 100 mil hab. — quanto menor, melhor</span></h2>
+          <svg id="chartCompSaude" viewBox="0 0 420 210" role="img" aria-label="Comparação dos indicadores de saúde entre os dois municípios e a média do painel"></svg>
+        </div>
+      </div>
+
+      <div class="panel panel-wide">
+        <h2>Tabela comparativa</h2>
+        <div class="table-scroll">
+          <table class="tabela-relatorio" id="tabelaComparacao"></table>
+        </div>
       </div>
     </section>
 
@@ -232,6 +289,7 @@
 <script src="js/stats.js"></script>
 <script src="js/render.js"></script>
 <script src="js/geo.js"></script>
+<script src="js/export.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

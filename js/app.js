@@ -9,6 +9,8 @@ function setView(view){
   if(view==='inicio') renderInicio();
   if(view==='dashboard') renderDashboard();
   if(view==='mapa') renderMapaGeo();
+  if(view==='relatorios') renderRelatorios();
+  if(view==='comparacoes') renderComparacoes();
 }
 
 document.getElementById('nav').addEventListener('click', (e)=>{
@@ -71,6 +73,24 @@ document.getElementById('selCamadaMapa').addEventListener('change', (e)=>{
   state.mapaCamada = e.target.value;
   renderMapaGeo();
 });
+
+/* ============ FILTROS — COMPARAÇÕES ============ */
+document.getElementById('selCompA').addEventListener('change', (e)=>{
+  state.compA = Number(e.target.value);
+  renderComparacoes();
+});
+document.getElementById('selCompB').addEventListener('change', (e)=>{
+  state.compB = Number(e.target.value);
+  renderComparacoes();
+});
+
+/* ============ EXPORTAÇÃO — RELATÓRIOS ============ */
+document.getElementById('btnExportCSV').addEventListener('click', exportarCSV);
+document.getElementById('btnExportExcel').addEventListener('click', exportarExcel);
+document.getElementById('btnExportPNG').addEventListener('click', ()=>{
+  exportarImagemSVG('chartRankingRelatorio', `sanedata_ranking_${state.ano}.png`);
+});
+document.getElementById('btnImprimir').addEventListener('click', ()=> window.print());
 
 /* ============ INIT ============ */
 function popularSelectAnos(){
