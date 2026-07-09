@@ -148,6 +148,8 @@ function renderInicio(){
   }
 
   const m = data[state.municipioIdx] || data[0];
+  const inputMunicipio = document.getElementById('selMunicipio');
+  if(inputMunicipio) inputMunicipio.value = rotuloMunicipio(m);
   const compKey = state.componente, saudeKey = state.indicador;
 
   const completosComp = comDadosCompletos(data, [compKey]);
@@ -397,6 +399,7 @@ function renderMapa(svgId, todos, idxValues, highlightPos, idxData, selectedPos)
 /* ============ RENDER: DASHBOARD ============ */
 function renderDashboard(){
   renderInicio(); // seção "Município em foco" (déficit x saúde de um município + dispersão) — independente do índice composto abaixo
+  renderMapaGeo(); // mapa geográfico de PE (substitui o antigo mapa de calor esquemático), na mesma tela
 
   const dataAno = getDataset(state.ano);
   const data = comDadosCompletos(dataAno, INDICADORES_INDICE);
@@ -411,7 +414,7 @@ function renderDashboard(){
   if(dataAno.length === 0){
     clear2(cardsHost);
     cardsHost.innerHTML = placeholderHTML('Sem dados para este ano', 'Rode o pipeline em data/scripts/ (ver README) para gerar data/processed/painel_pe.json.');
-    rankHost.innerHTML = ""; clear(svgDecomp); clear(document.getElementById('mapaDashboard'));
+    rankHost.innerHTML = ""; clear(svgDecomp);
     document.getElementById('topMunicipioNome').textContent = '';
     if(avisoForaIndice) avisoForaIndice.textContent = '';
     return;
@@ -420,7 +423,6 @@ function renderDashboard(){
     clear2(cardsHost);
     cardsHost.innerHTML = placeholderHTML('Índice ainda não calculável', `O índice composto precisa dos ${INDICADORES_INDICE.length} indicadores (água, esgoto, dengue, chikungunya, diarreia) em pelo menos 2 municípios para gerar um ranking, e nenhum município tem essa combinação neste ano. ` + avisoSaneamento('deficitEsgoto'));
     rankHost.innerHTML = ""; clear(svgDecomp);
-    renderMapa('mapaDashboard', dataAno, null, -1, null);
     document.getElementById('topMunicipioNome').textContent = '';
     if(avisoForaIndice) avisoForaIndice.textContent = '';
     return;
@@ -435,7 +437,7 @@ function renderDashboard(){
       avisoForaIndice.textContent = '';
     } else {
       const faltando = INDICADORES_INDICE.find(k => municipioSel[k]===null || municipioSel[k]===undefined);
-      avisoForaIndice.textContent = `${municipioSel.nome}-${municipioSel.uf} (selecionado no topo da página) não aparece no ranking nem no mapa de calor abaixo: falta o indicador "${LABELS[faltando]}" para esse município em ${state.ano}. Os cards de "Município em foco" mais abaixo continuam mostrando os indicadores que esse município tem.`;
+      avisoForaIndice.textContent = `${municipioSel.nome}-${municipioSel.uf} (selecionado no topo da página) não aparece no ranking abaixo: falta o indicador "${LABELS[faltando]}" para esse município em ${state.ano}. Os cards de "Município em foco" mais abaixo continuam mostrando os indicadores que esse município tem.`;
     }
   }
 
@@ -476,6 +478,8 @@ function renderDashboard(){
       <span class="rank-name"><strong>${o.m.nome}</strong><span>${o.m.uf} · ${fmt(o.m.pop)} hab.${isSel ? ' · <strong>selecionado no topo da página</strong>' : ''}</span></span>
       <span class="rank-bar-wrap"><span class="rank-bar" style="width:${(o.val/maxVal*100).toFixed(0)}%"></span></span>
       <span class="rank-value">${fmt(o.val,1)}</span>`;
+    row.style.cursor = 'pointer';
+    row.addEventListener('click', ()=>{ state.municipioIdx = dataAno.indexOf(o.m); renderDashboard(); });
     rankHost.appendChild(row);
     if(isSel && row.scrollIntoView) row.scrollIntoView({block:'nearest'});
   });
@@ -499,11 +503,11 @@ function renderDashboard(){
       <span class="rank-name"><strong>${m.nome}</strong><span>${m.uf} · ${fmt(m.pop)} hab. · falta ${LABELS[faltando]}${isSel ? ' · <strong>selecionado no topo da página</strong>' : ''}</span></span>
       <span class="rank-bar-wrap"></span>
       <span class="rank-value">—</span>`;
+    row.style.cursor = 'pointer';
+    row.addEventListener('click', ()=>{ state.municipioIdx = dataAno.indexOf(m); renderDashboard(); });
     rankHost.appendChild(row);
     if(isSel && row.scrollIntoView) row.scrollIntoView({block:'nearest'});
   });
-
-  renderMapa('mapaDashboard', dataAno, idx, dataAno.indexOf(top.m), data, dataAno.indexOf(municipioSel));
 
   /* decomposição do índice do município #1 */
   clear(svgDecomp);

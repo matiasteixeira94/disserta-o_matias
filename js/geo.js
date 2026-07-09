@@ -10,7 +10,9 @@ const CODIGO_FERNANDO_DE_NORONHA = 2605459;
 let MALHA = null;            // FeatureCollection bruta
 let malhaPorCodigo = null;   // Map<codigo_ibge:number, feature>
 let malhaErro = null;
-let mapaSelecionado = null;  // codigo_ibge do município clicado no mapa (ou null)
+/* o município selecionado no mapa é o mesmo de todo o painel (state.municipioIdx,
+   controlado também pela busca no topo da página e pelo ranking do Dashboard) —
+   não existe mais uma seleção separada só do mapa. */
 
 async function carregarMalha(){
   const resp = await fetch('data/processed/malha_municipios_pe.geojson', { cache:'no-store' });
@@ -115,26 +117,19 @@ function renderMapaGeo(){
   const svg = document.getElementById('mapaGeografico');
   const legendaHost = document.getElementById('mapaLegenda');
   const hintHost = document.getElementById('mapaCamadaHint');
-  const infoHost = document.getElementById('mapaInfoMunicipio');
   if(!svg) return;
-
-  const dataAnoParaBusca = getDataset(state.ano);
-  popularDatalistMunicipios(dataAnoParaBusca);
-  const selMapa = document.getElementById('selMunicipioMapa');
-  if(selMapa){
-    const municipioAtual = mapaSelecionado !== null ? dataAnoParaBusca.find(m=>m.codigo===mapaSelecionado) : null;
-    selMapa.value = municipioAtual ? rotuloMunicipio(municipioAtual) : '';
-  }
 
   if(malhaErro){
     svg.parentElement.innerHTML = placeholderHTML('Não foi possível carregar a malha geográfica',
       `Falha ao buscar <code>data/processed/malha_municipios_pe.geojson</code> (${malhaErro.message}). ` +
       `Rode <code>python data/scripts/06_ibge_malha_municipios.py</code> (ver <code>data/scripts/README.md</code>).`);
-    legendaHost.innerHTML = ''; infoHost.innerHTML = '';
+    legendaHost.innerHTML = '';
     return;
   }
 
   const dataAno = getDataset(state.ano);
+  const municipioSel = dataAno[state.municipioIdx] || null;
+  const codigoSelecionado = municipioSel ? municipioSel.codigo : null;
   const camada = state.mapaCamada || 'indice';
   hintHost.textContent = `— ${rotuloCamada(camada)}, ${state.ano}`;
 
@@ -168,11 +163,10 @@ function renderMapaGeo(){
       d, fill: corDoMunicipio(codigo), class: 'path-municipio',
       'data-codigo': codigo,
     });
-    if(codigo === mapaSelecionado) path.classList.add('selecionado');
+    if(codigo === codigoSelecionado) path.classList.add('selecionado');
     svg.appendChild(path);
   }
 
-  // fundo (clique aqui limpa a seleção)
   svg.appendChild(el('rect', {x:0, y:0, width:largura, height:alturaContinente, fill:'transparent', id:'mapaFundo'}));
   featuresContinente.forEach(f => desenharMunicipio(f, projetar));
 
@@ -188,7 +182,7 @@ function renderMapaGeo(){
       return [insetX+x, insetY+y];
     });
     const pathNoronha = el('path', { d: dNoronha, fill: corDoMunicipio(CODIGO_FERNANDO_DE_NORONHA), class:'path-municipio', 'data-codigo': CODIGO_FERNANDO_DE_NORONHA });
-    if(CODIGO_FERNANDO_DE_NORONHA === mapaSelecionado) pathNoronha.classList.add('selecionado');
+    if(CODIGO_FERNANDO_DE_NORONHA === codigoSelecionado) pathNoronha.classList.add('selecionado');
     svg.appendChild(pathNoronha);
     const rotulo = el('text', {x:insetX+insetW/2, y:insetY+insetH+16, 'text-anchor':'middle', 'font-size':10, 'font-family':'IBM Plex Sans', fill:'var(--text-muted)'});
     rotulo.textContent = 'Fernando de Noronha (fora de escala)';
@@ -196,7 +190,6 @@ function renderMapaGeo(){
   }
 
   renderLegenda(legendaHost, camada, min, max, valsValidos.length>0);
-  renderInfoMunicipio(infoHost, dataAno, camada);
 }
 
 function renderLegenda(host, camada, min, max, temDados){
@@ -209,37 +202,6 @@ function renderLegenda(host, camada, min, max, temDados){
     <span class="legenda-barra"></span>
     <span class="legenda-rotulo">${fmt(max,1)}${UNIDADE_CAMADA[camada]}</span>
     <span class="legenda-item"><span class="legenda-swatch" style="background:${corSemDado()}"></span>sem dado apurado</span>`;
-}
-
-function renderInfoMunicipio(host, dataAno, camada){
-  if(mapaSelecionado === null){
-    host.innerHTML = `<p class="hint">Clique em um município no mapa para ver os detalhes aqui.</p>`;
-    return;
-  }
-  const m = dataAno.find(d => d.codigo === mapaSelecionado);
-  if(!m){
-    host.innerHTML = `<p class="hint">Sem dados para este município em ${state.ano}.</p>`;
-    return;
-  }
-  const valores = valoresPorCamada(dataAno, camada);
-  const v = valores.get(m.codigo);
-  host.innerHTML = `
-    <h3 style="margin-bottom:10px">${m.nome}-${m.uf}</h3>
-    <div class="card-sub" style="margin-bottom:14px">${fmt(m.pop)} habitantes · ano ${state.ano}</div>
-    <div class="card accent-bordo" style="margin-bottom:10px">
-      <span class="card-label">${rotuloCamada(camada)}</span>
-      <span class="card-value">${v===null||v===undefined ? '—' : fmt(v,1)+' '+UNIDADE_CAMADA[camada]}</span>
-    </div>
-    <table class="mapa-tabela-detalhe">
-      <tbody>
-        <tr><td>Déficit água</td><td>${m.deficitAgua==null?'—':fmt(m.deficitAgua,1)+'%'}</td></tr>
-        <tr><td>Déficit esgoto</td><td>${m.deficitEsgoto==null?'—':fmt(m.deficitEsgoto,1)+'%'}</td></tr>
-        <tr><td>Déficit resíduos</td><td>${m.deficitResiduos==null?'—':fmt(m.deficitResiduos,1)+'%'}</td></tr>
-        <tr><td>Dengue</td><td>${m.taxaDengue==null?'—':fmt(m.taxaDengue)}</td></tr>
-        <tr><td>Chikungunya</td><td>${m.taxaChikungunya==null?'—':fmt(m.taxaChikungunya)}</td></tr>
-        <tr><td>Diarreia aguda</td><td>${m.taxaDiarreia==null?'—':fmt(m.taxaDiarreia)}</td></tr>
-      </tbody>
-    </table>`;
 }
 
 /* ============ INTERAÇÃO (delegada, ligada uma única vez) ============ */
@@ -266,8 +228,12 @@ function renderInfoMunicipio(host, dataAno, camada){
   svg.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; });
   svg.addEventListener('click', (e) => {
     const path = e.target.closest('path.path-municipio');
-    const codigo = path ? Number(path.dataset.codigo) : null;
-    mapaSelecionado = (codigo !== null && codigo === mapaSelecionado) ? null : codigo;
-    renderMapaGeo();
+    if(!path) return;
+    const codigo = Number(path.dataset.codigo);
+    const dataAno = getDataset(state.ano);
+    const idx = dataAno.findIndex(m => m.codigo === codigo);
+    if(idx < 0) return;
+    state.municipioIdx = idx;
+    renderDashboard();
   });
 })();

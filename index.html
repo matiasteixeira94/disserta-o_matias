@@ -33,10 +33,6 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="5" rx="1.5"/><rect x="13" y="10" width="8" height="11" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/></svg>
         Dashboard
       </button>
-      <button class="nav-item" data-view="mapa">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 4 3 6.5v14L9 18l6 2.5 6-2.5v-14L15 6.5 9 4Z"/><path d="M9 4v14M15 6.5v14"/></svg>
-        Mapa
-      </button>
       <button class="nav-item" data-view="relatorios">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3h9l5 5v13H6z"/><path d="M9 12h6M9 16h6M9 8h2"/></svg>
         Relatórios
@@ -95,10 +91,6 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="5" rx="1.5"/><rect x="13" y="10" width="8" height="11" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/></svg>
             Dashboard
           </button>
-          <button class="hero-nav-btn" data-view="mapa">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 4 3 6.5v14L9 18l6 2.5 6-2.5v-14L15 6.5 9 4Z"/><path d="M9 4v14M15 6.5v14"/></svg>
-            Mapa
-          </button>
           <button class="hero-nav-btn" data-view="relatorios">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3h9l5 5v13H6z"/><path d="M9 12h6M9 16h6M9 8h2"/></svg>
             Relatórios
@@ -133,15 +125,29 @@
       <div class="grid-2">
         <div class="panel">
           <h2>Ranking de priorização <span class="hint" id="rankingHint">— do município que mais precisa de investimento para o que menos precisa</span></h2>
+          <p class="hint" style="display:block; margin-bottom:8px">Clique em um município da lista para ver os dados dele em "Município em foco", mais abaixo.</p>
           <div id="rankingList" class="ranking-list"></div>
         </div>
-        <div class="panel">
-          <h2>Mapa de calor de prioridade <span class="hint">— esquemático, não geográfico. Cor: quanto mais para o terracota, maior a prioridade</span></h2>
-          <svg id="mapaDashboard" viewBox="0 0 100 100" role="img" aria-label="Mapa de calor esquemático de prioridade por município"></svg>
-          <div class="mapa-legenda">
-            <span class="legenda-item" style="margin-left:0"><span class="legenda-swatch" style="border-radius:50%; border:1.5px solid var(--terracota); background:transparent"></span>maior prioridade do painel</span>
-            <span class="legenda-item"><span class="legenda-swatch" style="border-radius:50%; border:1.5px solid var(--bordo); background:transparent"></span>município selecionado no topo</span>
+        <div class="panel panel-mapa">
+          <h2>Mapa geográfico de Pernambuco <span class="hint" id="mapaCamadaHint"></span></h2>
+          <div class="field" style="margin-bottom:10px">
+            <label for="selCamadaMapa">Camada exibida</label>
+            <select id="selCamadaMapa">
+              <option value="indice">Índice de priorização (composto)</option>
+              <option value="deficitAgua">Déficit — Abastecimento de água</option>
+              <option value="deficitEsgoto">Déficit — Esgotamento sanitário</option>
+              <option value="deficitResiduos">Déficit — Resíduos sólidos</option>
+              <option value="taxaDengue">Dengue</option>
+              <option value="taxaChikungunya">Chikungunya</option>
+              <option value="taxaDiarreia">Diarreia aguda</option>
+            </select>
           </div>
+          <div class="mapa-svg-wrap">
+            <svg id="mapaGeografico" role="img" aria-label="Mapa geográfico dos municípios de Pernambuco, coloridos pela camada selecionada"></svg>
+            <div class="mapa-tooltip" id="mapaTooltip"></div>
+          </div>
+          <div class="mapa-legenda" id="mapaLegenda"></div>
+          <p class="hint" style="display:block; margin-top:8px">Clique em um município no mapa para ver os dados dele em "Município em foco", mais abaixo.</p>
         </div>
       </div>
 
@@ -203,43 +209,6 @@
         <div class="corr-chart-wrap">
           <h2>Dispersão — déficit × indicador de saúde <span class="hint" id="corrChartHint">— todos os municípios de PE, no ano selecionado</span></h2>
           <svg id="chartCorrelacaoDispersao" viewBox="0 0 420 230" role="img" aria-label="Gráfico de dispersão do déficit de saneamento contra o indicador de saúde selecionado, um ponto por município, com linha de tendência e o município selecionado destacado"></svg>
-        </div>
-      </div>
-    </section>
-
-    <!-- ===================== MAPA ===================== -->
-    <section id="view-mapa" class="view">
-      <div class="filter-bar">
-        <div class="field">
-          <label for="selMunicipioMapa">Buscar município</label>
-          <input type="text" id="selMunicipioMapa" list="dlMunicipiosPE" autocomplete="off" placeholder="Digite para buscar...">
-        </div>
-        <div class="field">
-          <label for="selCamadaMapa">Camada exibida</label>
-          <select id="selCamadaMapa">
-            <option value="indice">Índice de priorização (composto)</option>
-            <option value="deficitAgua">Déficit — Abastecimento de água</option>
-            <option value="deficitEsgoto">Déficit — Esgotamento sanitário</option>
-            <option value="deficitResiduos">Déficit — Resíduos sólidos</option>
-            <option value="taxaDengue">Dengue</option>
-            <option value="taxaChikungunya">Chikungunya</option>
-            <option value="taxaDiarreia">Diarreia aguda</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="grid-2">
-        <div class="panel panel-mapa">
-          <h2>Mapa geográfico de Pernambuco <span class="hint" id="mapaCamadaHint"></span></h2>
-          <div class="mapa-svg-wrap">
-            <svg id="mapaGeografico" role="img" aria-label="Mapa geográfico dos municípios de Pernambuco, coloridos pela camada selecionada"></svg>
-            <div class="mapa-tooltip" id="mapaTooltip"></div>
-          </div>
-          <div class="mapa-legenda" id="mapaLegenda"></div>
-        </div>
-        <div class="panel">
-          <h2>Município selecionado</h2>
-          <div id="mapaInfoMunicipio"></div>
         </div>
       </div>
     </section>

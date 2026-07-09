@@ -1,8 +1,7 @@
 /* ============ NAVEGAÇÃO ============ */
 let currentView = 'inicio';
 function renderCurrentView(){
-  if(currentView==='dashboard') renderDashboard();
-  if(currentView==='mapa') renderMapaGeo();
+  if(currentView==='dashboard') renderDashboard(); // já inclui o mapa geográfico (renderMapaGeo) e "Município em foco" (renderInicio)
   if(currentView==='relatorios') renderRelatorios();
   if(currentView==='comparacoes') renderComparacoes();
   // 'inicio' é só a tela de abertura (institucional + logo + navegação), sem conteúdo dinâmico
@@ -12,7 +11,7 @@ function setView(view){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.getElementById('view-'+view).classList.add('active');
   document.querySelectorAll('.nav-item, .hero-nav-btn').forEach(b=>b.classList.toggle('active', b.dataset.view===view));
-  const titles = {inicio:'Tela Inicial', dashboard:'Dashboard', mapa:'Mapa', relatorios:'Relatórios', comparacoes:'Comparações'};
+  const titles = {inicio:'Tela Inicial', dashboard:'Dashboard', relatorios:'Relatórios', comparacoes:'Comparações'};
   document.getElementById('pageTitle').textContent = titles[view] || '';
   closeMobileMenu();
   renderCurrentView();
@@ -88,16 +87,10 @@ document.getElementById('pillsPeso').addEventListener('click', (e)=>{
   renderDashboard();
 });
 
-/* ============ FILTROS — MAPA ============ */
+/* ============ FILTROS — MAPA GEOGRÁFICO (dentro do Dashboard) ============ */
 document.getElementById('selCamadaMapa').addEventListener('change', (e)=>{
   state.mapaCamada = e.target.value;
   renderMapaGeo();
-});
-document.getElementById('selMunicipioMapa').addEventListener('change', (e)=>{
-  if(e.target.value === ''){ mapaSelecionado = null; renderMapaGeo(); return; }
-  const m = encontrarMunicipioPorRotulo(getDataset(state.ano), e.target.value);
-  if(m){ mapaSelecionado = m.codigo; renderMapaGeo(); }
-  else e.target.value = '';
 });
 
 /* ============ FILTROS — COMPARAÇÕES ============ */
@@ -152,7 +145,7 @@ async function iniciar(){
   try{
     await carregarMalha();
   } catch(erro){
-    malhaErro = erro; // só afeta a view Mapa — Tela Inicial/Dashboard não dependem da malha
+    malhaErro = erro; // só afeta o mapa geográfico dentro do Dashboard — o resto do painel não depende da malha
   }
   popularSelectAnos();
   popularSelectMunicipios(getDataset(state.ano));
