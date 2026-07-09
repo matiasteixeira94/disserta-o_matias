@@ -396,10 +396,21 @@ function renderMapa(svgId, todos, idxValues, highlightPos, idxData, selectedPos)
   });
 }
 
+/* explicação em linguagem simples de cada esquema de pesos — sem isso, "Entropia de
+   Shannon"/"PCA" não dizem nada pra quem não é da área de estatística. */
+const EXPLICACAO_PESO = {
+  igual: 'Os 5 indicadores (água, esgoto, dengue, chikungunya, diarreia) contam <strong>o mesmo</strong> na hora de somar tudo em um único número (20% cada). É a opção mais simples e mais fácil de explicar: nenhum indicador é tratado como "mais importante" que os outros.',
+  entropia: 'Os pesos são calculados <strong>automaticamente a partir dos próprios dados</strong>: indicadores que variam mais entre os municípios de PE — e por isso ajudam mais a diferenciar quem precisa de mais ou menos prioridade — recebem peso maior. Não é uma escolha manual, é um método estatístico objetivo (entropia de Shannon).',
+  pca: 'Os pesos vêm da combinação estatística que melhor resume a variação conjunta dos 5 indicadores (a técnica de Análise de Componentes Principais, 1º componente). Também é calculado automaticamente a partir dos dados, mas é mais sensível quando os indicadores estão correlacionados entre si.',
+};
+
 /* ============ RENDER: DASHBOARD ============ */
 function renderDashboard(){
   renderInicio(); // seção "Município em foco" (déficit x saúde de um município + dispersão) — independente do índice composto abaixo
   renderMapaGeo(); // mapa geográfico de PE (substitui o antigo mapa de calor esquemático), na mesma tela
+
+  const pesosExplicacao = document.getElementById('pesosExplicacao');
+  if(pesosExplicacao) pesosExplicacao.innerHTML = EXPLICACAO_PESO[state.peso || 'igual'];
 
   const dataAno = getDataset(state.ano);
   const data = comDadosCompletos(dataAno, INDICADORES_INDICE);
