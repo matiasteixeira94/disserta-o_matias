@@ -469,6 +469,29 @@ function renderDashboard(){
     if(isSel && row.scrollIntoView) row.scrollIntoView({block:'nearest'});
   });
 
+  /* municípios sem os 5 indicadores completos: aparecem também na lista (todos os 185
+     de PE, nunca só os que têm índice calculável), sem posição/barra — nunca inventamos
+     um índice pra eles, só deixamos claro que faltam dados e qual indicador falta. */
+  const semIndice = dataAno.filter(m => !data.includes(m)).sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR'));
+  if(semIndice.length){
+    const divisor = document.createElement('div');
+    divisor.className = 'rank-item-divisor';
+    divisor.textContent = `${semIndice.length} município(s) sem os ${INDICADORES_INDICE.length} indicadores completos em ${state.ano} — não entram no índice, mas continuam listados abaixo`;
+    rankHost.appendChild(divisor);
+  }
+  semIndice.forEach(m=>{
+    const isSel = m === municipioSel;
+    const faltando = INDICADORES_INDICE.find(k => m[k]===null || m[k]===undefined);
+    const row = document.createElement('div'); row.className = 'rank-item rank-item-sem-indice' + (isSel ? ' rank-item-selecionado' : '');
+    row.innerHTML = `
+      <span class="rank-pos">—</span>
+      <span class="rank-name"><strong>${m.nome}</strong><span>${m.uf} · ${fmt(m.pop)} hab. · falta ${LABELS[faltando]}${isSel ? ' · <strong>selecionado no topo da página</strong>' : ''}</span></span>
+      <span class="rank-bar-wrap"></span>
+      <span class="rank-value">—</span>`;
+    rankHost.appendChild(row);
+    if(isSel && row.scrollIntoView) row.scrollIntoView({block:'nearest'});
+  });
+
   renderMapa('mapaDashboard', dataAno, idx, dataAno.indexOf(top.m), data, dataAno.indexOf(municipioSel));
 
   /* decomposição do índice do município #1 */
