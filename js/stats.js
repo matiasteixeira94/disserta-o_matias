@@ -75,3 +75,12 @@ function forcaCorrelacao(rho){
   if(a < 0.6) return "moderada";
   return "forte";
 }
+/* regressão linear simples (OLS) — usada só para desenhar a linha de tendência do gráfico de dispersão */
+function linreg(xs, ys){
+  const n = xs.length;
+  const mx = xs.reduce((a,b)=>a+b,0)/n, my = ys.reduce((a,b)=>a+b,0)/n;
+  let num=0, den=0;
+  for(let i=0;i<n;i++){ num += (xs[i]-mx)*(ys[i]-my); den += (xs[i]-mx)**2; }
+  const a = den ? num/den : 0;
+  return {a, b: my - a*mx};
+}

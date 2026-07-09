@@ -44,9 +44,10 @@ function renderInicio(){
   if(data.length === 0){
     clear2(cardsHost);
     cardsHost.innerHTML = placeholderHTML('Sem dados para este ano', 'Nenhum município com população apurada para o ano selecionado. Rode o pipeline em data/scripts/ (ver README) para gerar data/processed/painel_pe.json.');
-    clear(svgComp); clear(document.getElementById('mapaInicio'));
+    clear(svgComp); clear(document.getElementById('mapaInicio')); clear(document.getElementById('chartCorrelacaoDispersao'));
     document.getElementById('corrValue').textContent = '—';
     document.getElementById('interpretacaoTexto').textContent = '';
+    document.getElementById('corrChartHint').textContent = '';
     return;
   }
 
@@ -109,9 +110,14 @@ function renderInicio(){
   /* correlação + interpretação — só com os dois indicadores presentes em ao menos 4 municípios */
   const corrHost = document.getElementById('corrValue');
   const textoHost = document.getElementById('interpretacaoTexto');
+  const chartCorr = document.getElementById('chartCorrelacaoDispersao');
+  const chartCorrHint = document.getElementById('corrChartHint');
   if(completosAmbos.length < 4){
     corrHost.textContent = '—';
     textoHost.textContent = `Dados insuficientes para calcular a correlação (${completosAmbos.length} município(s) com ambos os indicadores apurados; são necessários ao menos 4). ${semComp ? AVISO_SANEAMENTO : ''}`;
+    clear(chartCorr);
+    chartCorr.appendChild(svgTexto(`Dados insuficientes para o gráfico de dispersão (mínimo de 4 municípios com os dois indicadores apurados).`, 420, 230));
+    chartCorrHint.textContent = '';
   } else {
     const compVals = completosAmbos.map(d=>d[compKey]);
     const saudeVals = completosAmbos.map(d=>d[saudeKey]);
@@ -125,6 +131,73 @@ function renderInicio(){
     const posicaoTxt = (semComp || semSaude) ? '' :
       ` Em <strong>${m.nome}-${m.uf}</strong>, o déficit de ${LABELS[compKey].toLowerCase()} está em <strong>${fmt(m[compKey],1)}%</strong> e a taxa de ${LABELS[saudeKey].toLowerCase()} é de <strong>${fmt(m[saudeKey])} casos/100 mil hab.</strong>`;
     textoHost.innerHTML = `Considerando os <strong>${completosAmbos.length} municípios</strong> de PE com ambos os indicadores apurados neste ano, a correlação de Spearman entre déficit de ${LABELS[compKey].toLowerCase()} e ${LABELS[saudeKey].toLowerCase()} é <strong>${forca}</strong> e <strong>${direcao}</strong> (ρ = ${rho.toFixed(2)}) — ${esperado}.${posicaoTxt} Texto gerado automaticamente a partir dos filtros selecionados.`;
+
+    desenharDispersaoCorrelacao(chartCorr, completosAmbos, compKey, saudeKey, semComp||semSaude ? null : m);
+    chartCorrHint.textContent = `— ${completosAmbos.length} municípios com os dois indicadores apurados em ${state.ano}, ρ = ${rho.toFixed(2)}`;
+  }
+}
+
+/* dispersão déficit×saúde: um ponto por município, linha de tendência (OLS) e o município
+   selecionado em destaque — a mesma leitura da correlação em Spearman acima, mas mostrando
+   a posição (ranking) de cada município nos dois eixos ao mesmo tempo. */
+function desenharDispersaoCorrelacao(svg, dados, compKey, saudeKey, municipioSel){
+  clear(svg);
+  const W=420, H=230, padL=46, padR=18, padT=16, padB=38;
+  const plotW = W-padL-padR, plotH = H-padT-padB;
+  const xs = dados.map(d=>d[compKey]), ys = dados.map(d=>d[saudeKey]);
+  const [xMinD,xMaxD] = minMax(xs), [yMinD,yMaxD] = minMax(ys);
+  const xPad = (xMaxD-xMinD)*0.08 || Math.max(xMaxD,1)*0.1;
+  const yPad = (yMaxD-yMinD)*0.08 || Math.max(yMaxD,1)*0.1;
+  const xMin = Math.max(0, xMinD-xPad), xMax = xMaxD+xPad;
+  const yMin = Math.max(0, yMinD-yPad), yMax = yMaxD+yPad;
+  const sx = v => padL + ((v-xMin)/((xMax-xMin)||1))*plotW;
+  const sy = v => H-padB - ((v-yMin)/((yMax-yMin)||1))*plotH;
+
+  for(let i=0;i<=4;i++){
+    const v = yMin + (yMax-yMin)*i/4;
+    const y = sy(v);
+    svg.appendChild(el('line',{x1:padL, y1:y, x2:W-padR, y2:y, stroke:'var(--border)', 'stroke-width':1}));
+    const t = el('text',{x:padL-6, y:y+3, 'text-anchor':'end', 'font-size':9.5, 'font-family':'IBM Plex Mono', fill:'var(--text-muted)'});
+    t.textContent = fmt(v,0); svg.appendChild(t);
+  }
+  [xMin, (xMin+xMax)/2, xMax].forEach(v=>{
+    const t = el('text',{x:sx(v), y:H-padB+16, 'text-anchor':'middle', 'font-size':9.5, 'font-family':'IBM Plex Mono', fill:'var(--text-muted)'});
+    t.textContent = fmt(v,0)+'%'; svg.appendChild(t);
+  });
+  const xTitle = el('text',{x:padL+plotW/2, y:H-4, 'text-anchor':'middle', 'font-size':10, 'font-family':'IBM Plex Sans', fill:'var(--text-muted)'});
+  xTitle.textContent = `${LABELS[compKey]} (%)`; svg.appendChild(xTitle);
+  const yTitle = el('text',{x:12, y:padT+plotH/2, 'text-anchor':'middle', 'font-size':10, 'font-family':'IBM Plex Sans', fill:'var(--text-muted)', transform:`rotate(-90 12 ${padT+plotH/2})`});
+  yTitle.textContent = `${LABELS[saudeKey]} (/100k)`; svg.appendChild(yTitle);
+
+  const {a,b} = linreg(xs, ys);
+  const y1 = Math.max(yMin, Math.min(yMax, a*xMin+b));
+  const y2 = Math.max(yMin, Math.min(yMax, a*xMax+b));
+  svg.appendChild(el('line',{x1:sx(xMin), y1:sy(y1), x2:sx(xMax), y2:sy(y2), stroke:'var(--text-muted)', 'stroke-width':2, 'stroke-linecap':'round', opacity:0.55}));
+
+  dados.forEach(d=>{
+    if(d === municipioSel) return;
+    const cx = sx(d[compKey]), cy = sy(d[saudeKey]);
+    const hit = el('circle',{cx, cy, r:12, fill:'transparent'});
+    const hitTitle = document.createElementNS(svgNS,'title');
+    hitTitle.textContent = `${d.nome}: ${LABELS[compKey]} ${fmt(d[compKey],1)}% · ${LABELS[saudeKey]} ${fmt(d[saudeKey])}/100k`;
+    hit.appendChild(hitTitle);
+    svg.appendChild(hit);
+    svg.appendChild(el('circle',{cx, cy, r:5, fill:'var(--bordo)', 'fill-opacity':0.55, stroke:'var(--surface)', 'stroke-width':1.5}));
+  });
+
+  if(municipioSel){
+    const cx = sx(municipioSel[compKey]), cy = sy(municipioSel[saudeKey]);
+    svg.appendChild(el('circle',{cx, cy, r:9, fill:'none', stroke:'var(--terracota)', 'stroke-width':1.4}));
+    const dot = el('circle',{cx, cy, r:6, fill:'var(--terracota)', stroke:'var(--surface)', 'stroke-width':1.5});
+    const dotTitle = document.createElementNS(svgNS,'title');
+    dotTitle.textContent = `${municipioSel.nome} (selecionado): ${LABELS[compKey]} ${fmt(municipioSel[compKey],1)}% · ${LABELS[saudeKey]} ${fmt(municipioSel[saudeKey])}/100k`;
+    dot.appendChild(dotTitle);
+    svg.appendChild(dot);
+    const labelY = cy < padT+16 ? cy+18 : cy-12;
+    const anchor = cx > W-padR-60 ? 'end' : (cx < padL+60 ? 'start' : 'middle');
+    const lbl = el('text',{x:cx, y:labelY, 'text-anchor':anchor, 'font-size':10.5, 'font-family':'IBM Plex Sans', 'font-weight':600, fill:'var(--text)'});
+    lbl.textContent = municipioSel.nome;
+    svg.appendChild(lbl);
   }
 }
 
