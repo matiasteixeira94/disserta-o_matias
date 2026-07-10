@@ -483,26 +483,34 @@ function renderDashboard(){
     if(isSel && row.scrollIntoView) row.scrollIntoView({block:'nearest'});
   });
 
-  /* decomposição do índice do município #1 */
+  /* decomposição do índice do município SELECIONADO no topo da página — antes ficava
+     sempre no nº1 do ranking, então clicar em outro município no ranking/mapa não
+     mudava nada aqui. */
   clear(svgDecomp);
-  document.getElementById('topMunicipioNome').textContent = `${top.m.nome}-${top.m.uf}`;
-  const matrix = buildMatrix(data, INDICADORES_INDICE);
-  const weights = computeWeights(state.peso, matrix);
-  const topIdxPos = data.indexOf(top.m);
-  const contribs = INDICADORES_INDICE.map((k,j)=> matrix[topIdxPos][j]*weights[j]*100);
+  const nomeMunicipioNode = document.getElementById('topMunicipioNome');
   const W=480,H=200,padL=140,padR=50,padT=10;
-  const barH = 22, gapY = 10;
-  const maxC = Math.max(...contribs)*1.15 || 1;
-  INDICADORES_INDICE.forEach((k,i)=>{
-    const y = padT + i*(barH+gapY);
-    const w = (contribs[i]/maxC) * (W-padL-padR);
-    const isSaude = INDICADORES_SAUDE.includes(k);
-    svgDecomp.appendChild(el('rect',{x:padL, y, width:Math.max(w,1), height:barH, rx:6, fill:isSaude?'var(--terracota)':'var(--bordo)'}));
-    const lbl = el('text',{x:padL-10, y:y+barH/2+4, 'text-anchor':'end', 'font-size':12, 'font-family':'IBM Plex Sans', fill:'var(--text)'});
-    lbl.textContent = LABELS[k]; svgDecomp.appendChild(lbl);
-    const val = el('text',{x:padL+w+8, y:y+barH/2+4, 'font-size':11.5, 'font-family':'IBM Plex Mono', fill:'var(--text-muted)'});
-    val.textContent = contribs[i].toFixed(1)+' pts'; svgDecomp.appendChild(val);
-  });
+  const posSelNaData = data.indexOf(municipioSel);
+  if(posSelNaData < 0){
+    nomeMunicipioNode.textContent = `${municipioSel.nome}-${municipioSel.uf}`;
+    svgDecomp.appendChild(svgTexto(`${municipioSel.nome}-${municipioSel.uf} não tem os ${INDICADORES_INDICE.length} indicadores completos em ${state.ano}, então não dá pra decompor o índice dele (ver aviso acima).`, W, H));
+  } else {
+    nomeMunicipioNode.textContent = `${municipioSel.nome}-${municipioSel.uf}`;
+    const matrix = buildMatrix(data, INDICADORES_INDICE);
+    const weights = computeWeights(state.peso, matrix);
+    const contribs = INDICADORES_INDICE.map((k,j)=> matrix[posSelNaData][j]*weights[j]*100);
+    const barH = 22, gapY = 10;
+    const maxC = Math.max(...contribs)*1.15 || 1;
+    INDICADORES_INDICE.forEach((k,i)=>{
+      const y = padT + i*(barH+gapY);
+      const w = (contribs[i]/maxC) * (W-padL-padR);
+      const isSaude = INDICADORES_SAUDE.includes(k);
+      svgDecomp.appendChild(el('rect',{x:padL, y, width:Math.max(w,1), height:barH, rx:6, fill:isSaude?'var(--terracota)':'var(--bordo)'}));
+      const lbl = el('text',{x:padL-10, y:y+barH/2+4, 'text-anchor':'end', 'font-size':12, 'font-family':'IBM Plex Sans', fill:'var(--text)'});
+      lbl.textContent = LABELS[k]; svgDecomp.appendChild(lbl);
+      const val = el('text',{x:padL+w+8, y:y+barH/2+4, 'font-size':11.5, 'font-family':'IBM Plex Mono', fill:'var(--text-muted)'});
+      val.textContent = contribs[i].toFixed(1)+' pts'; svgDecomp.appendChild(val);
+    });
+  }
 
   /* índice simples vs. ponderado por população — um município de 5 mil hab. com déficit
      alto pesa igual a um de 1,5 milhão no ranking; esta comparação mostra se isso muda
