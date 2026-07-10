@@ -244,6 +244,16 @@ html[data-theme="dark"] .sidebar{ background:#180208; }
 .rank-item-divisor{ font-size:11px; color:var(--text-muted); padding:10px 10px 4px; text-transform:uppercase; letter-spacing:.03em; }
 .rank-item-sem-indice{ opacity:.6; }
 .rank-item-sem-indice .rank-pos{ color:var(--text-muted); }
+.barra-clicavel{ cursor:pointer; }
+.filtro-ativo{
+  display:flex; align-items:center; gap:8px; background:color-mix(in srgb, var(--bordo) 12%, transparent);
+  border:1px solid var(--bordo-claro); border-radius:8px; padding:8px 12px; margin-bottom:10px; font-size:12.5px;
+}
+.filtro-ativo button{
+  background:none; border:1px solid var(--bordo); color:var(--bordo); border-radius:14px; padding:2px 9px;
+  font-size:11.5px; font-weight:600; cursor:pointer; margin-left:auto;
+}
+.filtro-ativo button:hover{ background:var(--bordo); color:#fff; }
 .rank-pos{ font-family:var(--font-mono); font-weight:600; width:22px; color:var(--text-muted); flex:0 0 auto; }
 .rank-name{ flex:1; min-width:0; }
 .rank-name strong{ display:block; font-size:13.5px; }

@@ -358,6 +358,17 @@ const EXPLICACAO_PESO = {
   pca: '<strong>Peso pela análise estatística (PCA):</strong> os pesos vêm de uma técnica (Análise de Componentes Principais) que resume a variação conjunta dos 5 indicadores. Também automático, mas mais sensível quando os indicadores se correlacionam entre si.',
 };
 
+/* filtro do ranking, disparado clicando numa barra da distribuição (faixa de índice)
+   ou da mesorregião — nenhum dos dois muda o índice em si, só destaca/filtra a lista
+   abaixo pra facilitar entender a distribuição/o agrupamento clicado. */
+let filtroRanking = null; // { tipo:'mesorregiao', valor, label } | { tipo:'faixa', min, max, label } | null
+function municipioPassaFiltro(m, val){
+  if(!filtroRanking) return true;
+  if(filtroRanking.tipo === 'mesorregiao') return m.mesorregiao === filtroRanking.valor;
+  if(filtroRanking.tipo === 'faixa') return val!==undefined && val!==null && val>=filtroRanking.min && val<filtroRanking.max;
+  return true;
+}
+
 /* ============ RENDER: DASHBOARD ============ */
 function renderDashboard(){
   renderInicio(); // seção "Município em foco" (déficit x saúde de um município + dispersão) — independente do índice composto abaixo
@@ -387,6 +398,7 @@ function renderDashboard(){
     clear2(cardsHost);
     cardsHost.innerHTML = placeholderHTML('Sem dados para este ano', 'Rode o pipeline em data/scripts/ (ver README) para gerar data/processed/painel_pe.json.');
     rankHost.innerHTML = ""; clear(svgDecomp); clear(svgHistograma); clear(svgMesorregiao);
+    const filtroBarVazio = document.getElementById('filtroRankingBar'); if(filtroBarVazio) filtroBarVazio.innerHTML = '';
     if(statPonderadoHost) statPonderadoHost.innerHTML = '';
     document.getElementById('topMunicipioNome').textContent = '';
     if(avisoForaIndice) avisoForaIndice.textContent = '';
@@ -396,6 +408,7 @@ function renderDashboard(){
     clear2(cardsHost);
     cardsHost.innerHTML = placeholderHTML('Índice ainda não calculável', `O índice composto precisa dos ${INDICADORES_INDICE.length} indicadores (água, esgoto, dengue, chikungunya, diarreia) em pelo menos 2 municípios para gerar um ranking, e nenhum município tem essa combinação neste ano. ` + avisoSaneamento('deficitEsgoto'));
     rankHost.innerHTML = ""; clear(svgDecomp); clear(svgHistograma); clear(svgMesorregiao);
+    const filtroBarVazio = document.getElementById('filtroRankingBar'); if(filtroBarVazio) filtroBarVazio.innerHTML = '';
     if(statPonderadoHost) statPonderadoHost.innerHTML = '';
     document.getElementById('topMunicipioNome').textContent = '';
     if(avisoForaIndice) avisoForaIndice.textContent = '';
@@ -442,9 +455,22 @@ function renderDashboard(){
       <span class="card-sub">maior carga: ${piorSaude.nome} (${fmt(piorSaude.taxaDengue)} dengue/100k)</span>
     </div>`;
 
+  const filtroBar = document.getElementById('filtroRankingBar');
+  if(filtroBar){
+    if(filtroRanking){
+      filtroBar.innerHTML = `<div class="filtro-ativo">Filtro: <strong>${filtroRanking.label}</strong> <button type="button" id="btnLimparFiltroRanking">✕ limpar</button></div>`;
+      document.getElementById('btnLimparFiltroRanking').addEventListener('click', ()=>{ filtroRanking = null; renderDashboard(); });
+    } else {
+      filtroBar.innerHTML = '';
+    }
+  }
+
   rankHost.innerHTML = "";
   const maxVal = ordered[0].val || 1;
+  let visiveis = 0;
   ordered.forEach((o,i)=>{
+    if(!municipioPassaFiltro(o.m, o.val)) return;
+    visiveis++;
     const isSel = o.m === municipioSel;
     const row = document.createElement('div'); row.className = 'rank-item' + (isSel ? ' rank-item-selecionado' : '');
     row.innerHTML = `
@@ -461,7 +487,7 @@ function renderDashboard(){
   /* municípios sem os 5 indicadores completos: aparecem também na lista (todos os 185
      de PE, nunca só os que têm índice calculável), sem posição/barra — nunca inventamos
      um índice pra eles, só deixamos claro que faltam dados e qual indicador falta. */
-  const semIndice = dataAno.filter(m => !data.includes(m)).sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR'));
+  const semIndice = dataAno.filter(m => !data.includes(m) && municipioPassaFiltro(m)).sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR'));
   if(semIndice.length){
     const divisor = document.createElement('div');
     divisor.className = 'rank-item-divisor';
@@ -482,6 +508,13 @@ function renderDashboard(){
     rankHost.appendChild(row);
     if(isSel && row.scrollIntoView) row.scrollIntoView({block:'nearest'});
   });
+  if(filtroRanking && visiveis===0 && !semIndice.length){
+    const vazio = document.createElement('div');
+    vazio.className = 'hint';
+    vazio.style.padding = '10px';
+    vazio.textContent = 'Nenhum município corresponde a este filtro.';
+    rankHost.appendChild(vazio);
+  }
 
   /* decomposição do índice do município SELECIONADO no topo da página — antes ficava
      sempre no nº1 do ranking, então clicar em outro município no ranking/mapa não
@@ -523,14 +556,15 @@ function renderDashboard(){
       <div class="stat-comp-item"><span class="stat-comp-label">Ponderada por população</span><span class="stat-comp-value">${idxPonderado===null?'—':fmt(idxPonderado,1)}</span></div>`;
   }
 
-  desenharHistograma(svgHistograma, idx);
+  desenharHistograma(svgHistograma, data, idx);
   desenharIndiceMesorregiao(svgMesorregiao, data, idx);
 }
 
 /* histograma: em quantas faixas de 10 pontos (0-10, 10-20, ...) os municípios com
    índice calculável se distribuem — a lista ordenada (ranking) já existe, isso mostra
-   a forma da distribuição (concentrada, espalhada, bimodal) que o ranking não revela. */
-function desenharHistograma(svg, idx){
+   a forma da distribuição (concentrada, espalhada, bimodal) que o ranking não revela.
+   Clicável: cada faixa filtra o ranking pra só os municípios daquele intervalo. */
+function desenharHistograma(svg, data, idx){
   clear(svg);
   const W=420,H=200,padL=34,padR=12,padT=10,padB=28;
   svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
@@ -540,9 +574,11 @@ function desenharHistograma(svg, idx){
   }
   const nFaixas = 10;
   const contagem = new Array(nFaixas).fill(0);
-  idx.forEach(v=>{
+  const municipiosPorFaixa = Array.from({length:nFaixas}, ()=>[]);
+  idx.forEach((v,i)=>{
     const faixa = Math.min(Math.floor(v/10), nFaixas-1);
     contagem[faixa]++;
+    municipiosPorFaixa[faixa].push(data[i]);
   });
   const plotW = W-padL-padR, plotH = H-padT-padB;
   const maxC = Math.max(...contagem)*1.15 || 1;
@@ -559,7 +595,25 @@ function desenharHistograma(svg, idx){
     const h = (c/maxC)*plotH;
     const x = padL + i*barW;
     const y = padT + plotH - h;
-    svg.appendChild(el('rect',{x:x+1.5, y, width:Math.max(barW-3,1), height:Math.max(h,c?2:0), rx:3, fill:'var(--bordo)'}));
+    const min = i*10, max = (i+1)*10;
+    const ativo = filtroRanking && filtroRanking.tipo==='faixa' && filtroRanking.min===min;
+    const grupo = el('g', {class:'barra-clicavel'});
+    grupo.appendChild(el('rect',{x, y:padT, width:barW, height:plotH, fill:'transparent'})); // alvo de clique maior que a barra visível
+    const barra = el('rect',{x:x+1.5, y, width:Math.max(barW-3,1), height:Math.max(h,c?2:0), rx:3, fill:'var(--bordo)', stroke: ativo?'var(--terracota)':'none', 'stroke-width': ativo?2:0});
+    const nomes = municipiosPorFaixa[i].map(m=>m.nome);
+    const title = document.createElementNS(svgNS,'title');
+    title.textContent = c
+      ? `${c} município(s) entre ${min} e ${max} pontos: ${nomes.slice(0,8).join(', ')}${nomes.length>8 ? ` e mais ${nomes.length-8}` : ''} — clique pra filtrar o ranking`
+      : `Nenhum município entre ${min} e ${max} pontos`;
+    barra.appendChild(title);
+    grupo.appendChild(barra);
+    if(c>0){
+      grupo.addEventListener('click', ()=>{
+        filtroRanking = (ativo) ? null : { tipo:'faixa', min, max, label:`índice entre ${min} e ${max}` };
+        renderDashboard();
+      });
+    }
+    svg.appendChild(grupo);
     if(c>0){
       const val = el('text',{x:x+barW/2, y:y-4, 'text-anchor':'middle', 'font-size':9.5, 'font-family':'IBM Plex Mono', fill:'var(--text-muted)'});
       val.textContent = c; svg.appendChild(val);
@@ -572,7 +626,8 @@ function desenharHistograma(svg, idx){
 }
 
 /* índice médio por mesorregião — agrupamento oficial do IBGE (Sertão, São Francisco,
-   Agreste, Mata, Metropolitana de Recife), só entre os municípios com índice calculável. */
+   Agreste, Mata, Metropolitana de Recife), só entre os municípios com índice calculável.
+   Clicável: cada barra filtra o ranking pra só os municípios daquela mesorregião. */
 function desenharIndiceMesorregiao(svg, data, idx){
   clear(svg);
   const W=420,H=200,padL=150,padR=50,padT=8,padB=8;
@@ -581,10 +636,15 @@ function desenharIndiceMesorregiao(svg, data, idx){
   data.forEach((m,i)=>{
     const r = m.mesorregiao || 'Sem mesorregião';
     if(!porRegiao.has(r)) porRegiao.set(r, []);
-    porRegiao.get(r).push(idx[i]);
+    porRegiao.get(r).push({m, val:idx[i]});
   });
   const linhas = [...porRegiao.entries()]
-    .map(([nome,vals])=>({nome, media: vals.reduce((a,b)=>a+b,0)/vals.length, n: vals.length}))
+    .map(([nome,itens])=>({
+      nome,
+      media: itens.reduce((a,it)=>a+it.val,0)/itens.length,
+      n: itens.length,
+      top3: [...itens].sort((a,b)=>b.val-a.val).slice(0,3).map(it=>it.m.nome),
+    }))
     .sort((a,b)=>b.media-a.media);
   if(!linhas.length){
     svg.appendChild(svgTexto('Sem índice calculável neste ano.', W, H));
@@ -596,7 +656,19 @@ function desenharIndiceMesorregiao(svg, data, idx){
     const y = padT + i*rowH + rowH*0.2;
     const barH = rowH*0.6;
     const w = (l.media/maxVal)*(W-padL-padR);
-    svg.appendChild(el('rect',{x:padL, y, width:Math.max(w,1), height:barH, rx:5, fill:'var(--bordo)'}));
+    const ativo = filtroRanking && filtroRanking.tipo==='mesorregiao' && filtroRanking.valor===l.nome;
+    const grupo = el('g', {class:'barra-clicavel'});
+    grupo.appendChild(el('rect',{x:0, y:padT+i*rowH, width:W, height:rowH, fill:'transparent'})); // alvo de clique maior que a barra visível
+    const barra = el('rect',{x:padL, y, width:Math.max(w,1), height:barH, rx:5, fill:'var(--bordo)', stroke: ativo?'var(--terracota)':'none', 'stroke-width': ativo?2:0});
+    const title = document.createElementNS(svgNS,'title');
+    title.textContent = `${l.nome}: índice médio ${fmt(l.media,1)} entre ${l.n} município(s) — maiores prioridades: ${l.top3.join(', ')} — clique pra filtrar o ranking`;
+    barra.appendChild(title);
+    grupo.appendChild(barra);
+    grupo.addEventListener('click', ()=>{
+      filtroRanking = (ativo) ? null : { tipo:'mesorregiao', valor:l.nome, label:l.nome };
+      renderDashboard();
+    });
+    svg.appendChild(grupo);
     const lbl = el('text',{x:padL-8, y:y+barH/2+4, 'text-anchor':'end', 'font-size':10.5, 'font-family':'IBM Plex Sans', fill:'var(--text)'});
     lbl.textContent = l.nome.replace(' Pernambucano','').replace(' Pernambucana',''); svg.appendChild(lbl);
     const val = el('text',{x:padL+w+8, y:y+barH/2+4, 'font-size':10, 'font-family':'IBM Plex Mono', fill:'var(--text-muted)'});
