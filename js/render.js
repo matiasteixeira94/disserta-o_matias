@@ -585,23 +585,49 @@ function construirTabelaHTML(linhas, colunas){
   return head + body;
 }
 
-function desenharRankingBarras(svg, itens){
+/* ranking em barras: cor da barra segue a mesma escala verde→âmbar→terracota do mapa
+   de calor (mesmo dado, mesmo significado — quanto mais terracota, mais prioridade),
+   calculada sobre o intervalo de TODOS os municípios com índice no ano, não só do
+   top 15 exibido, senão até o "menos urgente" do top 15 apareceria verde. */
+function desenharRankingBarras(svg, itens, minGeral, maxGeral){
   clear(svg);
-  const rowH=20, gapY=6, padL=170, padR=54, padT=8, W=480;
-  const H = Math.max(padT + itens.length*(rowH+gapY), 60);
+  const rowH=20, gapY=8, padL=172, padR=54, padT=6, W=480;
+  const H = Math.max(padT + itens.length*(rowH+gapY) + 6, 60);
   svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
   if(!itens.length){
     svg.appendChild(svgTexto(`Nenhum município com os ${INDICADORES_INDICE.length} indicadores do índice completos neste ano.`, W, H));
     return;
   }
-  const maxVal = Math.max(...itens.map(o=>o.indice)) * 1.15 || 1;
+  const plotR = W - padR;
+  const maxEscala = Math.max(...itens.map(o=>o.indice)) * 1.12 || 1;
+  const minCor = minGeral ?? Math.min(...itens.map(o=>o.indice));
+  const maxCor = maxGeral ?? Math.max(...itens.map(o=>o.indice));
+
+  itens.forEach((o,i)=>{
+    if(i%2===1){
+      const y = padT + i*(rowH+gapY) - gapY/2;
+      svg.appendChild(el("rect",{x:0, y, width:W, height:rowH+gapY, fill:"var(--surface-alt)"}));
+    }
+  });
+  [0,25,50,75,100].forEach(v=>{
+    if(v > maxEscala) return;
+    const x = padL + (v/maxEscala)*(plotR-padL);
+    svg.appendChild(el("line",{x1:x, y1:1, x2:x, y2:H-1, stroke:"var(--border)", "stroke-width":1}));
+  });
+
   itens.forEach((o,i)=>{
     const y = padT + i*(rowH+gapY);
-    const w = (o.indice/maxVal)*(W-padL-padR);
-    svg.appendChild(el("rect",{x:padL, y, width:Math.max(w,1), height:rowH, rx:5, fill:"var(--bordo)"}));
-    const lbl = el("text",{x:padL-8, y:y+rowH/2+4, "text-anchor":"end", "font-size":11, "font-family":"IBM Plex Sans", fill:"var(--text)"});
+    const w = Math.max((o.indice/maxEscala)*(plotR-padL), 2);
+    const t = maxCor>minCor ? (o.indice-minCor)/(maxCor-minCor) : 0.5;
+    const barra = el("rect",{x:padL, y, width:w, height:rowH, rx:5, fill:escalaCor(t)});
+    const title = document.createElementNS(svgNS, "title");
+    title.textContent = `${o.pos}º — ${o.nome}: índice ${fmt(o.indice,1)} de 100`;
+    barra.appendChild(title);
+    svg.appendChild(barra);
+
+    const lbl = el("text",{x:padL-8, y:y+rowH/2+4, "text-anchor":"end", "font-size":11, "font-family":"IBM Plex Sans", "font-weight": i<3?"600":"400", fill:"var(--text)"});
     lbl.textContent = `${o.pos}º ${o.nome}`; svg.appendChild(lbl);
-    const val = el("text",{x:padL+w+8, y:y+rowH/2+4, "font-size":10.5, "font-family":"IBM Plex Mono", fill:"var(--text-muted)"});
+    const val = el("text",{x:padL+w+8, y:y+rowH/2+4, "font-size":10.5, "font-family":"IBM Plex Mono", "font-weight":"600", fill:"var(--text)"});
     val.textContent = fmt(o.indice,1); svg.appendChild(val);
   });
 }
@@ -645,7 +671,8 @@ function renderRelatorios(){
       <span class="card-sub">${comIndice.length ? `entre ${comIndice.length} municípios` : "aguardando dados completos"}</span>
     </div>`;
 
-  desenharRankingBarras(chartHost, comIndice.slice(0,15));
+  const valoresIndice = comIndice.map(l=>l.indice);
+  desenharRankingBarras(chartHost, comIndice.slice(0,15), Math.min(...valoresIndice), Math.max(...valoresIndice));
   if(hintHost) hintHost.textContent = comIndice.length
     ? `— top ${Math.min(15,comIndice.length)} de ${comIndice.length} municípios com os ${INDICADORES_INDICE.length} indicadores do índice completos`
     : `— nenhum município com os ${INDICADORES_INDICE.length} indicadores do índice completos ainda`;
