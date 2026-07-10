@@ -4,16 +4,6 @@ function el(tag, attrs){ const e = document.createElementNS(svgNS, tag); for(con
 function clear(node){ while(node.firstChild) node.removeChild(node.firstChild); }
 function fmt(n, dec=0){ if(n===null || n===undefined || Number.isNaN(n)) return "—"; return n.toLocaleString('pt-BR', {minimumFractionDigits:dec, maximumFractionDigits:dec}); }
 
-/* posição esquemática (grade, não geográfica) do município i entre n no painel */
-function layoutXY(i, n){
-  const cols = Math.ceil(Math.sqrt(n));
-  const rows = Math.ceil(n/cols);
-  const col = i % cols, row = Math.floor(i/cols);
-  const x = 10 + (cols>1 ? col/(cols-1) * 80 : 40);
-  const y = 10 + (rows>1 ? row/(rows-1) * 80 : 40);
-  return {x, y};
-}
-
 /* ============ PLACEHOLDER GENÉRICO (dado ainda não apurado) ============ */
 function placeholderHTML(titulo, texto){
   return `<div class="placeholder-box"><h2>${titulo}</h2><p>${texto}</p></div>`;
@@ -139,7 +129,7 @@ function renderInicio(){
   if(data.length === 0){
     clear2(cardsHost);
     cardsHost.innerHTML = placeholderHTML('Sem dados para este ano', 'Nenhum município com população apurada para o ano selecionado. Rode o pipeline em data/scripts/ (ver README) para gerar data/processed/painel_pe.json.');
-    clear(svgComp); clear(document.getElementById('mapaInicio')); clear(document.getElementById('chartCorrelacaoDispersao')); clear(document.getElementById('chartIndiceTemporal'));
+    clear(svgComp); clear(document.getElementById('chartCorrelacaoDispersao')); clear(document.getElementById('chartIndiceTemporal'));
     document.getElementById('corrValue').textContent = '—';
     document.getElementById('interpretacaoTexto').textContent = '';
     document.getElementById('corrChartHint').textContent = '';
@@ -211,9 +201,6 @@ function renderInicio(){
     const mediaSaude = completosAmbos.reduce((a,b)=>a+b[saudeKey],0)/completosAmbos.length;
     desenharComparacao(svgComp, m, compKey, saudeKey, mediaComp, mediaSaude);
   }
-
-  /* mapa esquemático */
-  renderMapa('mapaInicio', data, idxData.length?idx:null, idxData.length?posNoIdx:-1, idxData);
 
   /* correlação + interpretação — só com os dois indicadores presentes em ao menos 4 municípios */
   const corrHost = document.getElementById('corrValue');
@@ -362,39 +349,6 @@ function desenharComparacao(svg, m, compKey, saudeKey, mediaComp, mediaSaude){
 }
 
 function clear2(node){ node.innerHTML=""; }
-
-/* ============ MAPA ESQUEMÁTICO (reutilizado em duas telas) ============
-   `todos` = lista completa de municípios do ano (define a grade de posições);
-   `idxValues`/`idxData` = índice de priorização e a sublista para a qual ele
-   foi calculado (pode ser um subconjunto de `todos`, se faltar algum dado). */
-function renderMapa(svgId, todos, idxValues, highlightPos, idxData, selectedPos){
-  const svg = document.getElementById(svgId);
-  clear(svg);
-  svg.appendChild(el('rect',{x:2,y:2,width:96,height:96,rx:4,fill:'var(--surface-alt)',stroke:'var(--border)','stroke-width':0.6}));
-
-  const maxIdx = idxValues && idxValues.length ? Math.max(...idxValues) : 0;
-  todos.forEach((m,i)=>{
-    const {x,y} = layoutXY(i, todos.length);
-    const posIdx = idxData ? idxData.indexOf(m) : -1;
-    let color = 'var(--border)', r = 1.6;
-    if(posIdx >= 0 && maxIdx>0){
-      const t = idxValues[posIdx]/maxIdx;
-      color = t > 0.66 ? 'var(--terracota)' : (t > 0.33 ? 'var(--ambar)' : 'var(--verde)');
-      r = 1.6 + t*1.8;
-    }
-    const isHighlight = i === highlightPos;
-    const isSelected = selectedPos !== undefined && i === selectedPos;
-    const c = el('circle',{cx:x, cy:y, r, fill:color, class:'map-dot', opacity: (isHighlight||isSelected)?1:0.8});
-    if(isHighlight){
-      svg.appendChild(el('circle',{cx:x, cy:y, r:r+2.2, fill:'none', stroke:color, 'stroke-width':0.7}));
-    }
-    if(isSelected){
-      /* anel bordô: o município escolhido nos seletores do topo — distinto do anel de maior prioridade acima */
-      svg.appendChild(el('circle',{cx:x, cy:y, r:r+(isHighlight?3.8:2.2), fill:'none', stroke:'var(--bordo)', 'stroke-width':0.9}));
-    }
-    svg.appendChild(c);
-  });
-}
 
 /* explicação em linguagem simples de cada esquema de pesos — sem isso, "Entropia de
    Shannon"/"PCA" não dizem nada pra quem não é da área de estatística. */
