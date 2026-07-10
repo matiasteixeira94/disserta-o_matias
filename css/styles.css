@@ -315,6 +315,17 @@ html[data-theme="dark"] .sidebar{ background:#180208; }
 }
 .pesos-explicacao strong{ color:var(--bordo); }
 
+/* ============ TABELA ALTERNATIVA (acessibilidade — equivalente textual do gráfico) ============ */
+.tabela-alternativa{ margin-top:12px; }
+.tabela-alternativa summary{
+  cursor:pointer; font-size:12px; font-weight:600; color:var(--text-muted); list-style:none;
+}
+.tabela-alternativa summary::-webkit-details-marker{ display:none; }
+.tabela-alternativa summary::before{ content:"▸ "; }
+.tabela-alternativa[open] summary::before{ content:"▾ "; }
+.tabela-alternativa summary:hover{ color:var(--bordo); }
+.tabela-alternativa .table-scroll{ margin-top:8px; max-height:220px; overflow-y:auto; }
+
 /* ============ AÇÕES / EXPORTAÇÃO ============ */
 .actions-row{ display:flex; flex-wrap:wrap; gap:10px; }
 .btn-export{

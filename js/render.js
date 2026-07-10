@@ -396,6 +396,8 @@ function renderDashboard(){
     clear2(cardsHost);
     cardsHost.innerHTML = placeholderHTML('Sem dados para este ano', 'Rode o pipeline em data/scripts/ (ver README) para gerar data/processed/painel_pe.json.');
     rankHost.innerHTML = ""; clear(svgDecomp); clear(svgHistograma); clear(svgMesorregiao);
+    const tabHist = document.getElementById('tabelaHistograma'); if(tabHist) tabHist.innerHTML = '';
+    const tabMeso = document.getElementById('tabelaMesorregiao'); if(tabMeso) tabMeso.innerHTML = '';
     const filtroBarVazio = document.getElementById('filtroRankingBar'); if(filtroBarVazio) filtroBarVazio.innerHTML = '';
     if(statPonderadoHost) statPonderadoHost.innerHTML = '';
     document.getElementById('topMunicipioNome').textContent = '';
@@ -406,6 +408,8 @@ function renderDashboard(){
     clear2(cardsHost);
     cardsHost.innerHTML = placeholderHTML('Índice ainda não calculável', `O índice composto precisa dos ${INDICADORES_INDICE.length} indicadores (água, esgoto, dengue, chikungunya, diarreia) em pelo menos 2 municípios para gerar um ranking, e nenhum município tem essa combinação neste ano. ` + avisoSaneamento('deficitEsgoto'));
     rankHost.innerHTML = ""; clear(svgDecomp); clear(svgHistograma); clear(svgMesorregiao);
+    const tabHist = document.getElementById('tabelaHistograma'); if(tabHist) tabHist.innerHTML = '';
+    const tabMeso = document.getElementById('tabelaMesorregiao'); if(tabMeso) tabMeso.innerHTML = '';
     const filtroBarVazio = document.getElementById('filtroRankingBar'); if(filtroBarVazio) filtroBarVazio.innerHTML = '';
     if(statPonderadoHost) statPonderadoHost.innerHTML = '';
     document.getElementById('topMunicipioNome').textContent = '';
@@ -563,10 +567,12 @@ function renderDashboard(){
    Clicável: cada faixa filtra o ranking pra só os municípios daquele intervalo. */
 function desenharHistograma(svg, data, idx){
   clear(svg);
+  const tabelaHost = document.getElementById('tabelaHistograma');
   const W=420,H=200,padL=34,padR=12,padT=10,padB=28;
   svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
   if(!idx.length){
     svg.appendChild(svgTexto('Sem índice calculável neste ano.', W, H));
+    if(tabelaHost) tabelaHost.innerHTML = '';
     return;
   }
   const nFaixas = 10;
@@ -577,6 +583,14 @@ function desenharHistograma(svg, data, idx){
     contagem[faixa]++;
     municipiosPorFaixa[faixa].push(data[i]);
   });
+
+  /* tabela equivalente ao gráfico — pra quem usa leitor de tela ou só prefere ler números */
+  if(tabelaHost){
+    tabelaHost.innerHTML = `<thead><tr><th>Faixa do índice</th><th>Municípios</th><th>Nomes</th></tr></thead><tbody>` +
+      contagem.map((c,i)=>`<tr><td>${i*10}-${(i+1)*10}</td><td>${c}</td><td style="text-align:left; font-family:var(--font-body); white-space:normal">${municipiosPorFaixa[i].map(m=>m.nome).join(', ') || '—'}</td></tr>`).join('') +
+      `</tbody>`;
+  }
+
   const plotW = W-padL-padR, plotH = H-padT-padB;
   const maxC = Math.max(...contagem)*1.15 || 1;
   const barW = plotW/nFaixas;
@@ -627,6 +641,7 @@ function desenharHistograma(svg, data, idx){
    Clicável: cada barra filtra o ranking pra só os municípios daquela mesorregião. */
 function desenharIndiceMesorregiao(svg, data, idx){
   clear(svg);
+  const tabelaHost = document.getElementById('tabelaMesorregiao');
   const W=420,H=200,padL=150,padR=50,padT=8,padB=8;
   svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
   const porRegiao = new Map();
@@ -645,8 +660,17 @@ function desenharIndiceMesorregiao(svg, data, idx){
     .sort((a,b)=>b.media-a.media);
   if(!linhas.length){
     svg.appendChild(svgTexto('Sem índice calculável neste ano.', W, H));
+    if(tabelaHost) tabelaHost.innerHTML = '';
     return;
   }
+
+  /* tabela equivalente ao gráfico — pra quem usa leitor de tela ou só prefere ler números */
+  if(tabelaHost){
+    tabelaHost.innerHTML = `<thead><tr><th>Mesorregião</th><th>Índice médio</th><th>Municípios</th><th>Maiores prioridades</th></tr></thead><tbody>` +
+      linhas.map(l=>`<tr><td style="text-align:left; font-family:var(--font-body)">${l.nome}</td><td>${fmt(l.media,1)}</td><td>${l.n}</td><td style="text-align:left; font-family:var(--font-body); white-space:normal">${l.top3.join(', ')}</td></tr>`).join('') +
+      `</tbody>`;
+  }
+
   const rowH = (H-padT-padB)/linhas.length;
   const maxVal = Math.max(...linhas.map(l=>l.media))*1.15 || 1;
   linhas.forEach((l,i)=>{
