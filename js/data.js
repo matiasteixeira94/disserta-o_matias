@@ -40,8 +40,7 @@ async function carregarPainel(){
    Cai para anoFim se nenhum ano tiver dado suficiente ainda. */
 function anoPadrao(){
   for(let a = PAINEL.anoFim; a >= PAINEL.anoInicio; a--){
-    const completos = comDadosCompletos(getDataset(a), INDICADORES_INDICE);
-    if(completos.length >= 2) return String(a);
+    if(indiceCompletoCache(a, 'igual').completos.length >= 2) return String(a);
   }
   return String(PAINEL.anoFim);
 }
@@ -53,22 +52,47 @@ function anosDisponiveis(){
   return anos;
 }
 
-/* município x ano -> objeto plano usado pelas telas (nomes de campo iguais aos do protótipo original) */
+/* município x ano -> objeto plano usado pelas telas (nomes de campo iguais aos do protótipo
+   original). Cacheado por ano: várias partes do painel comparam município por referência de
+   objeto (indexOf, ===, includes) — sem cache, duas chamadas de getDataset(mesmoAno) em
+   pontos diferentes do código criavam objetos diferentes pro mesmo município, quebrando
+   essas comparações. Como ninguém muta os objetos retornados, cachear é seguro; nunca
+   precisa invalidar (PAINEL não muda durante a sessão). */
+const _cacheDataset = new Map();
 function getDataset(ano){
   if(!PAINEL) return [];
-  return PAINEL.municipios
-    .filter(m => String(m.ano) === String(ano))
+  const chave = String(ano);
+  if(_cacheDataset.has(chave)) return _cacheDataset.get(chave);
+  const resultado = PAINEL.municipios
+    .filter(m => String(m.ano) === chave)
     .map(m => ({
       codigo: m.codigo_ibge, nome: m.municipio, uf: m.uf, pop: m.populacao, mesorregiao: m.mesorregiao,
       deficitAgua: m.deficitAgua, deficitEsgoto: m.deficitEsgoto, deficitResiduos: m.deficitResiduos,
       taxaDengue: m.taxaDengue, taxaChikungunya: m.taxaChikungunya, taxaDiarreia: m.taxaDiarreia,
     }))
     .sort((a,b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+  _cacheDataset.set(chave, resultado);
+  return resultado;
 }
 
 /* mantém só os municípios com valor real (não nulo) nas chaves pedidas */
 function comDadosCompletos(data, chaves){
   return data.filter(m => chaves.every(k => m[k] !== null && m[k] !== undefined && !Number.isNaN(m[k])));
+}
+
+/* cache do índice composto (municípios completos + valores) por (ano, peso) — a mesma
+   conta era refeita do zero em Dashboard, Mapa, Relatórios e Comparações a cada render,
+   mesmo quando nada relevante tinha mudado. Nunca precisa invalidar: os dados de PAINEL
+   não mudam durante a sessão (só um novo carregarPainel() traria dado diferente). */
+const _cacheIndice = new Map();
+function indiceCompletoCache(ano, peso){
+  const chave = ano + '|' + peso;
+  if(_cacheIndice.has(chave)) return _cacheIndice.get(chave);
+  const completos = comDadosCompletos(getDataset(ano), INDICADORES_INDICE);
+  const idx = completos.length ? computeIndex(completos, peso) : [];
+  const resultado = { completos, idx };
+  _cacheIndice.set(chave, resultado);
+  return resultado;
 }
 
 function round1(n){ return Math.round(n*10)/10; }

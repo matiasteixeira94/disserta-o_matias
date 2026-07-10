@@ -60,9 +60,8 @@ function desenharIndiceTemporal(svg, codigoMunicipio, nomeMunicipio){
 
   const pontosMunicipio = [], pontosMedia = [];
   anos.forEach(a=>{
-    const completos = comDadosCompletos(getDataset(a), INDICADORES_INDICE);
+    const { completos, idx } = indiceCompletoCache(a, "igual");
     if(completos.length < 2){ pontosMunicipio.push(null); pontosMedia.push(null); return; }
-    const idx = computeIndex(completos, "igual");
     pontosMedia.push(idx.reduce((s,v)=>s+v,0)/idx.length);
     const pos = completos.findIndex(m=>m.codigo===codigoMunicipio);
     pontosMunicipio.push(pos>=0 ? idx[pos] : null);
@@ -149,8 +148,7 @@ function renderInicio(){
   const semComp = m[compKey] === null || m[compKey] === undefined;
   const semSaude = m[saudeKey] === null || m[saudeKey] === undefined;
 
-  const idxData = comDadosCompletos(data, INDICADORES_INDICE);
-  const idx = idxData.length ? computeIndex(idxData, "igual") : [];
+  const { completos: idxData, idx } = indiceCompletoCache(state.ano, 'igual');
   const posNoIdx = idxData.indexOf(m);
   const idxRank = posNoIdx>=0 ? rankDesc(idx)[posNoIdx] : null;
 
@@ -378,7 +376,7 @@ function renderDashboard(){
   if(pesosExplicacao) pesosExplicacao.innerHTML = EXPLICACAO_PESO[state.peso || 'igual'];
 
   const dataAno = getDataset(state.ano);
-  const data = comDadosCompletos(dataAno, INDICADORES_INDICE);
+  const { completos: data, idx } = indiceCompletoCache(state.ano, state.peso || 'igual');
   const hint = document.getElementById('rankingHint');
   if(hint) hint.textContent = `— do que mais precisa de investimento para o que menos precisa · ${data.length} de ${dataAno.length} municípios de PE com os ${INDICADORES_INDICE.length} indicadores do índice completos`;
 
@@ -415,7 +413,6 @@ function renderDashboard(){
     return;
   }
 
-  const idx = computeIndex(data, state.peso);
   const ordered = data.map((m,i)=>({m,val:idx[i]})).sort((a,b)=>b.val-a.val);
   const municipioSel = dataAno[state.municipioIdx] || dataAno[0];
 
@@ -728,10 +725,9 @@ const COLUNAS_RELATORIO = [
 
 function calcularLinhasRelatorio(){
   const dataAno = getDataset(state.ano);
-  const completos = comDadosCompletos(dataAno, INDICADORES_INDICE);
+  const { completos, idx } = indiceCompletoCache(state.ano, state.peso || "igual");
   let ordenados = [];
   if(completos.length){
-    const idx = computeIndex(completos, state.peso || "igual");
     ordenados = completos.map((m,i)=>({m, val: idx[i]})).sort((a,b)=>b.val-a.val);
   }
   return [
@@ -934,8 +930,7 @@ function renderComparacoes(){
     return vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : null;
   };
 
-  const completos = comDadosCompletos(dataAno, INDICADORES_INDICE);
-  const idxTodos = completos.length ? computeIndex(completos, state.peso || "igual") : [];
+  const { completos, idx: idxTodos } = indiceCompletoCache(state.ano, state.peso || "igual");
   const idxDe = (m) => { const pos = completos.indexOf(m); return pos>=0 ? idxTodos[pos] : null; };
   const idxA = idxDe(A), idxB = idxDe(B);
   const posDe = (m) => { const pos = completos.indexOf(m); return pos>=0 ? rankDesc(idxTodos)[pos] : null; };

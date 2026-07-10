@@ -153,11 +153,8 @@ function rotuloCamada(camada){
 function valoresPorCamada(dataAno, camada){
   const mapa = new Map();
   if(camada === 'indice'){
-    const completos = comDadosCompletos(dataAno, INDICADORES_INDICE);
-    if(completos.length){
-      const idx = computeIndex(completos, state.peso || 'igual');
-      completos.forEach((m,i) => mapa.set(m.codigo, idx[i]));
-    }
+    const { completos, idx } = indiceCompletoCache(state.ano, state.peso || 'igual');
+    completos.forEach((m,i) => mapa.set(m.codigo, idx[i]));
   } else if(CAMADA_INVESTIMENTO[camada]){
     const chaveDeficit = CAMADA_INVESTIMENTO[camada];
     dataAno.forEach(m => {
