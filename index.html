@@ -158,6 +158,12 @@
           </div>
           <div class="mapa-legenda" id="mapaLegenda"></div>
           <p class="hint" style="display:block; margin-top:8px">Clique em um município no mapa para ver os dados dele em "Município em foco", mais abaixo.</p>
+
+          <div class="pontos-atencao-bar">
+            <button class="btn-export" id="btnModoCuradoria">📍 Modo curadoria: adicionar ponto de atenção</button>
+            <button class="btn-export" id="btnBaixarPontos" style="display:none">Baixar pontos_atencao.json atualizado</button>
+          </div>
+          <p class="scope-note" id="pontosAtencaoInfo">Pontos de atenção: locais específicos (não o município inteiro) que precisam de obra de infraestrutura. Curadoria manual da equipe de pesquisa — não é um cadastro público em tempo real (ver <code>data/processed/README.md</code>). Com o modo curadoria ativo, clique no mapa pra registrar um ponto nesta sessão; depois baixe o JSON atualizado e substitua <code>data/processed/pontos_atencao.json</code> no repositório pra publicar de vez.</p>
         </div>
       </div>
 

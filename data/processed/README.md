@@ -27,3 +27,26 @@ de novo para regenerar). Arquivos:
   usados pelo mapa geográfico (`js/geo.js`); cada feature tem só `codarea`
   (código IBGE de 7 dígitos, casado com `codigo_ibge` do painel) e a
   geometria. Independente do restante do pipeline.
+- `pontos_atencao.json` — pontos específicos (endereço/local, não só o
+  município inteiro) que precisam de obra de infraestrutura, plotados como
+  marcadores no mapa geográfico. **Curadoria manual da equipe de pesquisa,
+  não um cadastro público em tempo real** — o site é 100% estático, sem
+  banco de dados, então não há como um visitante gravar um ponto que outros
+  visitantes veriam. O painel tem um "modo curadoria" (Dashboard → mapa
+  geográfico) que deixa clicar no mapa, preencher endereço/categoria/
+  descrição e baixar o JSON atualizado — para o ponto valer pra todo mundo,
+  baixe o arquivo e substitua este aqui, depois publique (commit + push).
+  Formato de cada item:
+  ```json
+  {
+    "codigo_ibge": 2611606,
+    "endereco": "Rua Exemplo, 123 - Bairro, Município-PE",
+    "lat": -8.0578,
+    "lon": -34.8829,
+    "categoria": "agua | esgoto | residuos | outro",
+    "descricao": "texto curto explicando a necessidade de obra",
+    "fonte": "quem registrou e quando (ex.: 'visita técnica, 2026-07-10')"
+  }
+  ```
+  Vazio (`"pontos": []`) até a equipe de pesquisa cadastrar o primeiro ponto
+  real — nunca preenchido com exemplo fictício.

@@ -14,11 +14,28 @@ let malhaErro = null;
    controlado também pela busca no topo da página e pelo ranking do Dashboard) —
    não existe mais uma seleção separada só do mapa. */
 
+/* pontos de atenção: curadoria manual (ver data/processed/README.md) — carregados do
+   arquivo publicado + o que for adicionado nesta sessão via "modo curadoria", antes de
+   baixar o JSON atualizado pra substituir o arquivo e publicar de vez. */
+let PONTOS_ATENCAO = [];
+let modoCuradoria = false;
+let mapaProjecaoAtual = null; // {box, largura, alturaContinente, padding} do último render, pro clique do modo curadoria
+
 async function carregarMalha(){
   const resp = await fetch('data/processed/malha_municipios_pe.geojson', { cache:'no-store' });
   if(!resp.ok) throw new Error(`HTTP ${resp.status} ao buscar data/processed/malha_municipios_pe.geojson`);
   MALHA = await resp.json();
   malhaPorCodigo = new Map(MALHA.features.map(f => [Number(f.properties.codarea), f]));
+}
+
+async function carregarPontosAtencao(){
+  try{
+    const resp = await fetch('data/processed/pontos_atencao.json', { cache:'no-store' });
+    if(resp.ok){
+      const payload = await resp.json();
+      PONTOS_ATENCAO = Array.isArray(payload.pontos) ? payload.pontos : [];
+    }
+  }catch(e){ /* arquivo opcional — sem pontos ainda não é erro */ }
 }
 
 /* ============ GEOMETRIA / PROJEÇÃO ============ */
@@ -55,6 +72,23 @@ function criarProjecao(box, width, height, padding){
   return ([lon,lat]) => [
     offX + (lon-box.minLon)*cosLat*escala,
     offY + (box.maxLat-lat)*escala, // y invertido: norte fica pra cima
+  ];
+}
+
+/* inversa de criarProjecao — usada só pelo modo curadoria, pra converter um clique no
+   SVG (x,y do viewBox) de volta em [lon,lat] e registrar um ponto de atenção. */
+function inverterProjecao(box, width, height, padding){
+  const latMedia = (box.minLat+box.maxLat)/2;
+  const cosLat = Math.cos(latMedia * Math.PI/180);
+  const lonSpan = Math.max((box.maxLon-box.minLon) * cosLat, 1e-9);
+  const latSpan = Math.max(box.maxLat-box.minLat, 1e-9);
+  const plotW = width - padding*2, plotH = height - padding*2;
+  const escala = Math.min(plotW/lonSpan, plotH/latSpan);
+  const offX = padding + (plotW - lonSpan*escala)/2;
+  const offY = padding + (plotH - latSpan*escala)/2;
+  return (x,y) => [
+    (x-offX)/(cosLat*escala) + box.minLon,
+    box.maxLat - (y-offY)/escala,
   ];
 }
 
@@ -173,6 +207,8 @@ function renderMapaGeo(){
   clear(svg);
 
   const projetar = criarProjecao(boxContinente, largura, alturaContinente, padding);
+  /* guardado pro clique do "modo curadoria" conseguir inverter x,y -> lon,lat depois */
+  mapaProjecaoAtual = { box: boxContinente, largura, alturaContinente, padding };
 
   function corDoMunicipio(codigo){
     const v = valores.get(codigo);
@@ -193,6 +229,24 @@ function renderMapaGeo(){
 
   svg.appendChild(el('rect', {x:0, y:0, width:largura, height:alturaContinente, fill:'transparent', id:'mapaFundo'}));
   featuresContinente.forEach(f => desenharMunicipio(f, projetar));
+
+  /* pontos de atenção: um marcador por ponto curado (ver data/processed/README.md),
+     cor por categoria, sempre com título nativo — nunca só a cor carregando o sentido */
+  const CATEGORIA_COR = { agua:'var(--bordo)', esgoto:'var(--terracota)', residuos:'var(--ambar)', outro:'var(--text-muted)' };
+  PONTOS_ATENCAO.forEach(p=>{
+    if(typeof p.lon !== 'number' || typeof p.lat !== 'number') return;
+    const [x,y] = projetar([p.lon, p.lat]);
+    if(x<0 || x>largura || y<0 || y>alturaContinente) return; // fora do continente (ex.: erro de digitação) — não desenha
+    const cor = CATEGORIA_COR[p.categoria] || CATEGORIA_COR.outro;
+    const marcador = el('path', {
+      d: `M ${x} ${y-6} c -3.3 0 -6 2.7 -6 6 c 0 4.5 6 10 6 10 s 6 -5.5 6 -10 c 0 -3.3 -2.7 -6 -6 -6 Z`,
+      fill: cor, stroke: 'var(--surface)', 'stroke-width': 1, class: 'ponto-atencao',
+    });
+    const title = document.createElementNS(svgNS, 'title');
+    title.textContent = `${p.endereco || 'Ponto de atenção'}${p.categoria ? ' — ' + p.categoria : ''}${p.descricao ? ': ' + p.descricao : ''}`;
+    marcador.appendChild(title);
+    svg.appendChild(marcador);
+  });
 
   // inset de Fernando de Noronha
   const featureNoronha = malhaPorCodigo.get(CODIGO_FERNANDO_DE_NORONHA);
@@ -252,6 +306,7 @@ function renderLegenda(host, camada, min, max, temDados){
   });
   svg.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; });
   svg.addEventListener('click', (e) => {
+    if(modoCuradoria){ adicionarPontoAtencaoNoClique(svg, e); return; }
     const path = e.target.closest('path.path-municipio');
     if(!path) return;
     const codigo = Number(path.dataset.codigo);
@@ -262,3 +317,53 @@ function renderLegenda(host, camada, min, max, temDados){
     renderDashboard();
   });
 })();
+
+/* converte um clique do mouse (coordenadas de tela) pra x,y do viewBox do SVG —
+   necessário porque o SVG é responsivo (width:100%), então 1px de tela != 1 unidade
+   do viewBox. Técnica padrão via a matriz de transformação de tela do próprio SVG. */
+function coordenadasSvg(svg, evt){
+  if(!svg.createSVGPoint || !svg.getScreenCTM) return null;
+  const ctm = svg.getScreenCTM();
+  if(!ctm) return null;
+  const pt = svg.createSVGPoint();
+  pt.x = evt.clientX; pt.y = evt.clientY;
+  const p = pt.matrixTransform(ctm.inverse());
+  return {x:p.x, y:p.y};
+}
+
+/* modo curadoria: clicar no mapa pede endereço/categoria/descrição/fonte por prompt()
+   (simples, mas suficiente pra um uso interno da equipe de pesquisa) e adiciona o ponto
+   só nesta sessão do navegador — precisa baixar o JSON e substituir o arquivo no
+   repositório pra o ponto aparecer pra quem mais visitar o site depois. */
+function adicionarPontoAtencaoNoClique(svg, e){
+  if(!mapaProjecaoAtual) return;
+  const pos = coordenadasSvg(svg, e);
+  if(!pos){ alert('Não foi possível calcular a posição clicada no mapa — tente de novo.'); return; }
+  const { box, largura, alturaContinente, padding } = mapaProjecaoAtual;
+  if(pos.y > alturaContinente){ alert('Clique dentro do mapa do continente (não no quadro de Fernando de Noronha) para registrar um ponto.'); return; }
+  const inv = inverterProjecao(box, largura, alturaContinente, padding);
+  const [lon, lat] = inv(pos.x, pos.y);
+
+  const path = e.target.closest('path.path-municipio');
+  const codigo = path ? Number(path.dataset.codigo) : null;
+  const municipio = codigo!==null ? getDataset(state.ano).find(m=>m.codigo===codigo) : null;
+
+  const endereco = prompt(`Endereço/local do ponto de atenção${municipio ? ' em '+municipio.nome+'-'+municipio.uf : ''}:`);
+  if(!endereco) return;
+  const categoria = (prompt('Categoria (digite exatamente): agua, esgoto, residuos ou outro', 'agua') || 'outro').trim().toLowerCase();
+  const descricao = prompt('Descrição curta da necessidade de obra:', '') || '';
+  const fonte = prompt('Fonte (quem registrou e quando):', `curadoria manual, ${new Date().toISOString().slice(0,10)}`) || '';
+
+  PONTOS_ATENCAO.push({
+    codigo_ibge: codigo,
+    endereco,
+    lat: Math.round(lat*1e5)/1e5,
+    lon: Math.round(lon*1e5)/1e5,
+    categoria: ['agua','esgoto','residuos'].includes(categoria) ? categoria : 'outro',
+    descricao,
+    fonte,
+  });
+  renderMapaGeo();
+  const btnBaixar = document.getElementById('btnBaixarPontos');
+  if(btnBaixar) btnBaixar.style.display = '';
+}

@@ -93,6 +93,21 @@ document.getElementById('selCamadaMapa').addEventListener('change', (e)=>{
   renderMapaGeo();
 });
 
+/* ============ PONTOS DE ATENÇÃO — MODO CURADORIA (ver data/processed/README.md) ============ */
+const btnModoCuradoria = document.getElementById('btnModoCuradoria');
+btnModoCuradoria.addEventListener('click', ()=>{
+  modoCuradoria = !modoCuradoria;
+  btnModoCuradoria.classList.toggle('btn-export-primary', modoCuradoria);
+  btnModoCuradoria.textContent = modoCuradoria
+    ? '📍 Modo curadoria ativo — clique no mapa pra adicionar um ponto'
+    : '📍 Modo curadoria: adicionar ponto de atenção';
+});
+document.getElementById('btnBaixarPontos').addEventListener('click', ()=>{
+  const payload = { pontos: PONTOS_ATENCAO };
+  const json = JSON.stringify(payload, null, 2);
+  baixarBlob(new Blob([json], {type:'application/json;charset=utf-8'}), 'pontos_atencao.json');
+});
+
 /* ============ FILTROS — COMPARAÇÕES ============ */
 document.getElementById('selCompA').addEventListener('change', (e)=>{
   const data = getDataset(state.ano);
@@ -147,6 +162,7 @@ async function iniciar(){
   } catch(erro){
     malhaErro = erro; // só afeta o mapa geográfico dentro do Dashboard — o resto do painel não depende da malha
   }
+  await carregarPontosAtencao(); // opcional — sem arquivo/pontos ainda não é erro, ver js/geo.js
   popularSelectAnos();
   popularSelectMunicipios(getDataset(state.ano));
 }

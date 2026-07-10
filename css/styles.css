@@ -298,6 +298,11 @@ html[data-theme="dark"] .sidebar{ background:#180208; }
 .btn-export.btn-export-primary{ background:var(--bordo); border-color:var(--bordo); color:#fff; }
 .btn-export.btn-export-primary:hover{ background:var(--bordo-hover); color:#fff; }
 
+/* ============ PONTOS DE ATENÇÃO (modo curadoria) ============ */
+.pontos-atencao-bar{ display:flex; flex-wrap:wrap; gap:10px; margin-top:14px; }
+.ponto-atencao{ cursor:pointer; }
+.ponto-atencao:hover{ opacity:.8; }
+
 /* ============ TABELA DE RELATÓRIO / COMPARAÇÃO ============ */
 .table-scroll{ overflow-x:auto; }
 .tabela-relatorio{ width:100%; border-collapse:collapse; font-size:12.5px; white-space:nowrap; }
