@@ -107,20 +107,18 @@
 
     <!-- ===================== DASHBOARD ===================== -->
     <section id="view-dashboard" class="view">
-      <div class="filter-bar">
-        <div class="field">
-          <span class="field-label">Como somar os 5 indicadores em um número só?</span>
-          <div class="pills" id="pillsPeso">
-            <button class="pill active" data-peso="igual">Pesos iguais</button>
-            <button class="pill" data-peso="entropia">Entropia de Shannon</button>
-            <button class="pill" data-peso="pca">PCA (1º componente)</button>
-          </div>
-        </div>
-      </div>
-      <p class="pesos-explicacao" id="pesosExplicacao"></p>
-
-      <p class="scope-note">O <strong>índice de priorização</strong> combina déficit de água, de esgoto e os indicadores de saúde: quanto <strong>maior</strong> o índice, <strong>maior a carência</strong> do município e mais ele deveria ser priorizado em novos investimentos — não é uma nota de desempenho. O ranking abaixo está ordenado do município que mais precisa de investimento para o que menos precisa.</p>
+      <p class="scope-note">O <strong>índice de priorização</strong> junta os 5 indicadores (déficit de água, de esgoto, dengue, chikungunya e diarreia) em um <strong>único número de 0 a 100</strong>: quanto <strong>maior</strong>, <strong>mais o município precisa de investimento</strong> — não é uma nota de desempenho. Por padrão, os 5 indicadores contam o mesmo peso (20% cada) na soma. O ranking abaixo está ordenado do município que mais precisa de investimento para o que menos precisa.</p>
       <p class="scope-note" id="avisoMunicipioForaIndice"></p>
+
+      <button class="link-avancado" id="btnPesosAvancado" aria-expanded="false" type="button">⚙️ Mudar como esse peso é calculado <span class="link-avancado-detalhe">(avançado, opcional)</span> <span class="link-avancado-seta">▾</span></button>
+      <div class="pesos-avancado" id="pesosAvancado" hidden>
+        <div class="pills" id="pillsPeso">
+          <button class="pill active" data-peso="igual">Peso igual (padrão)</button>
+          <button class="pill" data-peso="entropia">Peso pela variação dos dados</button>
+          <button class="pill" data-peso="pca">Peso pela análise estatística (PCA)</button>
+        </div>
+        <p class="pesos-explicacao" id="pesosExplicacao"></p>
+      </div>
 
       <div class="cards-row" id="cardsDashboard"></div>
 

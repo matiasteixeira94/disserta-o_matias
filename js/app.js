@@ -87,6 +87,16 @@ document.getElementById('pillsPeso').addEventListener('click', (e)=>{
   renderDashboard();
 });
 
+/* esquema de pesos escondido atrás de "avançado" por padrão — a maioria não precisa
+   entender entropia de Shannon/PCA pra usar o painel, só quem quer conferir robustez. */
+const btnPesosAvancado = document.getElementById('btnPesosAvancado');
+btnPesosAvancado.addEventListener('click', ()=>{
+  const painel = document.getElementById('pesosAvancado');
+  const aberto = painel.hidden;
+  painel.hidden = !aberto;
+  btnPesosAvancado.setAttribute('aria-expanded', String(aberto));
+});
+
 /* ============ FILTROS — MAPA GEOGRÁFICO (dentro do Dashboard) ============ */
 document.getElementById('selCamadaMapa').addEventListener('change', (e)=>{
   state.mapaCamada = e.target.value;

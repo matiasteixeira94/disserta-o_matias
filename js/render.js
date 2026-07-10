@@ -353,9 +353,9 @@ function clear2(node){ node.innerHTML=""; }
 /* explicação em linguagem simples de cada esquema de pesos — sem isso, "Entropia de
    Shannon"/"PCA" não dizem nada pra quem não é da área de estatística. */
 const EXPLICACAO_PESO = {
-  igual: 'Os 5 indicadores (água, esgoto, dengue, chikungunya, diarreia) contam <strong>o mesmo</strong> na hora de somar tudo em um único número (20% cada). É a opção mais simples e mais fácil de explicar: nenhum indicador é tratado como "mais importante" que os outros.',
-  entropia: 'Os pesos são calculados <strong>automaticamente a partir dos próprios dados</strong>: indicadores que variam mais entre os municípios de PE — e por isso ajudam mais a diferenciar quem precisa de mais ou menos prioridade — recebem peso maior. Não é uma escolha manual, é um método estatístico objetivo (entropia de Shannon).',
-  pca: 'Os pesos vêm da combinação estatística que melhor resume a variação conjunta dos 5 indicadores (a técnica de Análise de Componentes Principais, 1º componente). Também é calculado automaticamente a partir dos dados, mas é mais sensível quando os indicadores estão correlacionados entre si.',
+  igual: '<strong>Peso igual (padrão):</strong> os 5 indicadores contam 20% cada. Nenhum é tratado como mais importante — a opção mais simples de explicar e defender.',
+  entropia: '<strong>Peso pela variação dos dados:</strong> o indicador que mais varia de um município pra outro em PE recebe peso maior — calculado automaticamente pelos dados (método: entropia de Shannon), não escolhido à mão.',
+  pca: '<strong>Peso pela análise estatística (PCA):</strong> os pesos vêm de uma técnica (Análise de Componentes Principais) que resume a variação conjunta dos 5 indicadores. Também automático, mas mais sensível quando os indicadores se correlacionam entre si.',
 };
 
 /* ============ RENDER: DASHBOARD ============ */
