@@ -47,7 +47,7 @@ def anos_cobertos(indicador: str) -> set[int]:
 
 def main():
     municipios = pd.read_csv(PROCESSED_DIR / "municipios_pe.csv")
-    base = municipios[["codigo_ibge", "municipio", "ano", "populacao"]].copy()
+    base = municipios[["codigo_ibge", "municipio", "ano", "populacao", "mesorregiao"]].copy()
 
     notificacoes = carregar_opcional("saude_notificacoes_pe.csv")
     internacoes = carregar_opcional("saude_internacoes_dda_pe.csv")
@@ -88,7 +88,7 @@ def main():
     base["taxaDiarreia"] = taxa("casos_diarreia") if "casos_diarreia" in base.columns else taxa("__nada__")
 
     colunas_finais = [
-        "codigo_ibge", "municipio", "ano", "populacao",
+        "codigo_ibge", "municipio", "ano", "populacao", "mesorregiao",
         "deficitAgua", "deficitEsgoto", "deficitResiduos",
         "taxaDengue", "taxaChikungunya", "taxaDiarreia",
     ]

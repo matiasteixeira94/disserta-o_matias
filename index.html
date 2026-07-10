@@ -166,6 +166,23 @@
         <svg id="chartDecomposicao" viewBox="0 0 480 200" role="img" aria-label="Decomposição do índice de priorização por indicador"></svg>
       </div>
 
+      <div class="grid-2">
+        <div class="panel">
+          <h2>Distribuição do índice <span class="hint" id="histogramaHint">— quantos municípios caem em cada faixa</span></h2>
+          <div class="stat-comparativo" id="statPonderado"></div>
+          <svg id="chartHistograma" viewBox="0 0 420 200" role="img" aria-label="Histograma de distribuição do índice de priorização entre os municípios de PE"></svg>
+        </div>
+        <div class="panel">
+          <h2>Índice médio por mesorregião <span class="hint">— agrupamento oficial do IBGE</span></h2>
+          <svg id="chartMesorregiao" viewBox="0 0 420 200" role="img" aria-label="Gráfico de barras do índice médio de priorização por mesorregião de Pernambuco"></svg>
+        </div>
+      </div>
+
+      <div class="panel panel-wide">
+        <h2>Matriz de correlação <span class="hint">— Spearman ρ entre cada déficit de saneamento e cada indicador de saúde, todos os municípios do ano</span></h2>
+        <div id="matrizCorrelacao"></div>
+      </div>
+
       <div class="secao-divisor">
         <h2>Município em foco <span class="hint">— use o seletor de Município/Ano no topo da página; os dois campos abaixo só afetam esta seção</span></h2>
       </div>

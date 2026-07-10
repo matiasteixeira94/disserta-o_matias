@@ -307,6 +307,18 @@ html[data-theme="dark"] .sidebar{ background:#180208; }
 .tabela-relatorio thead th{ font-size:11px; text-transform:uppercase; letter-spacing:.03em; color:var(--text-muted); background:var(--surface-alt); font-family:var(--font-body); position:sticky; top:0; }
 .tabela-relatorio tbody tr:nth-child(odd){ background:var(--surface-alt); }
 
+/* ============ MATRIZ DE CORRELAÇÃO ============ */
+.matriz-correlacao{ white-space:normal; }
+.matriz-correlacao th{ text-align:center !important; }
+.matriz-correlacao tbody tr:nth-child(odd){ background:transparent !important; } /* a cor da célula já carrega o significado */
+.celula-correlacao{ text-align:center !important; font-weight:600; min-width:74px; }
+
+/* ============ COMPARATIVO SIMPLES x PONDERADO ============ */
+.stat-comparativo{ display:flex; gap:12px; margin-bottom:14px; }
+.stat-comp-item{ flex:1; display:flex; flex-direction:column; align-items:center; background:var(--surface-alt); border-radius:10px; padding:10px 8px; }
+.stat-comp-label{ font-size:10.5px; color:var(--text-muted); text-align:center; }
+.stat-comp-value{ font-family:var(--font-mono); font-size:20px; font-weight:600; color:var(--bordo); margin-top:2px; }
+
 /* ============ PLACEHOLDER VIEWS ============ */
 .placeholder-box{
   background:var(--surface); border:1px dashed var(--border); border-radius:var(--radius);

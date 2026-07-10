@@ -371,15 +371,23 @@ function renderDashboard(){
   const hint = document.getElementById('rankingHint');
   if(hint) hint.textContent = `— do que mais precisa de investimento para o que menos precisa · ${data.length} de ${dataAno.length} municípios de PE com os ${INDICADORES_INDICE.length} indicadores do índice completos`;
 
+  /* independe do índice composto (usa só o par déficit×saúde de cada célula), por isso
+     roda mesmo quando o índice de 5 indicadores ainda não fecha para este ano. */
+  renderMatrizCorrelacao(document.getElementById('matrizCorrelacao'), dataAno);
+
   const cardsHost = document.getElementById('cardsDashboard');
   const rankHost = document.getElementById('rankingList');
   const svgDecomp = document.getElementById('chartDecomposicao');
+  const svgHistograma = document.getElementById('chartHistograma');
+  const svgMesorregiao = document.getElementById('chartMesorregiao');
+  const statPonderadoHost = document.getElementById('statPonderado');
 
   const avisoForaIndice = document.getElementById('avisoMunicipioForaIndice');
   if(dataAno.length === 0){
     clear2(cardsHost);
     cardsHost.innerHTML = placeholderHTML('Sem dados para este ano', 'Rode o pipeline em data/scripts/ (ver README) para gerar data/processed/painel_pe.json.');
-    rankHost.innerHTML = ""; clear(svgDecomp);
+    rankHost.innerHTML = ""; clear(svgDecomp); clear(svgHistograma); clear(svgMesorregiao);
+    if(statPonderadoHost) statPonderadoHost.innerHTML = '';
     document.getElementById('topMunicipioNome').textContent = '';
     if(avisoForaIndice) avisoForaIndice.textContent = '';
     return;
@@ -387,7 +395,8 @@ function renderDashboard(){
   if(data.length < 2){
     clear2(cardsHost);
     cardsHost.innerHTML = placeholderHTML('Índice ainda não calculável', `O índice composto precisa dos ${INDICADORES_INDICE.length} indicadores (água, esgoto, dengue, chikungunya, diarreia) em pelo menos 2 municípios para gerar um ranking, e nenhum município tem essa combinação neste ano. ` + avisoSaneamento('deficitEsgoto'));
-    rankHost.innerHTML = ""; clear(svgDecomp);
+    rankHost.innerHTML = ""; clear(svgDecomp); clear(svgHistograma); clear(svgMesorregiao);
+    if(statPonderadoHost) statPonderadoHost.innerHTML = '';
     document.getElementById('topMunicipioNome').textContent = '';
     if(avisoForaIndice) avisoForaIndice.textContent = '';
     return;
@@ -494,6 +503,130 @@ function renderDashboard(){
     const val = el('text',{x:padL+w+8, y:y+barH/2+4, 'font-size':11.5, 'font-family':'IBM Plex Mono', fill:'var(--text-muted)'});
     val.textContent = contribs[i].toFixed(1)+' pts'; svgDecomp.appendChild(val);
   });
+
+  /* índice simples vs. ponderado por população — um município de 5 mil hab. com déficit
+     alto pesa igual a um de 1,5 milhão no ranking; esta comparação mostra se isso muda
+     o quadro geral do painel. */
+  if(statPonderadoHost){
+    const somaPop = data.reduce((a,m)=>a+(m.pop||0),0);
+    const idxPonderado = somaPop ? data.reduce((a,m,i)=>a+idx[i]*(m.pop||0),0)/somaPop : null;
+    statPonderadoHost.innerHTML = `
+      <div class="stat-comp-item"><span class="stat-comp-label">Média simples</span><span class="stat-comp-value">${fmt(mediaIdx,1)}</span></div>
+      <div class="stat-comp-item"><span class="stat-comp-label">Ponderada por população</span><span class="stat-comp-value">${idxPonderado===null?'—':fmt(idxPonderado,1)}</span></div>`;
+  }
+
+  desenharHistograma(svgHistograma, idx);
+  desenharIndiceMesorregiao(svgMesorregiao, data, idx);
+}
+
+/* histograma: em quantas faixas de 10 pontos (0-10, 10-20, ...) os municípios com
+   índice calculável se distribuem — a lista ordenada (ranking) já existe, isso mostra
+   a forma da distribuição (concentrada, espalhada, bimodal) que o ranking não revela. */
+function desenharHistograma(svg, idx){
+  clear(svg);
+  const W=420,H=200,padL=34,padR=12,padT=10,padB=28;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  if(!idx.length){
+    svg.appendChild(svgTexto('Sem índice calculável neste ano.', W, H));
+    return;
+  }
+  const nFaixas = 10;
+  const contagem = new Array(nFaixas).fill(0);
+  idx.forEach(v=>{
+    const faixa = Math.min(Math.floor(v/10), nFaixas-1);
+    contagem[faixa]++;
+  });
+  const plotW = W-padL-padR, plotH = H-padT-padB;
+  const maxC = Math.max(...contagem)*1.15 || 1;
+  const barW = plotW/nFaixas;
+
+  [0,0.5,1].forEach(f=>{
+    const y = padT + plotH*(1-f);
+    svg.appendChild(el('line',{x1:padL,y1:y,x2:W-padR,y2:y,stroke:'var(--border)','stroke-width':1}));
+    const t = el('text',{x:padL-6,y:y+3,'text-anchor':'end','font-size':9.5,'font-family':'IBM Plex Mono',fill:'var(--text-muted)'});
+    t.textContent = fmt(Math.round(maxC*f),0); svg.appendChild(t);
+  });
+
+  contagem.forEach((c,i)=>{
+    const h = (c/maxC)*plotH;
+    const x = padL + i*barW;
+    const y = padT + plotH - h;
+    svg.appendChild(el('rect',{x:x+1.5, y, width:Math.max(barW-3,1), height:Math.max(h,c?2:0), rx:3, fill:'var(--bordo)'}));
+    if(c>0){
+      const val = el('text',{x:x+barW/2, y:y-4, 'text-anchor':'middle', 'font-size':9.5, 'font-family':'IBM Plex Mono', fill:'var(--text-muted)'});
+      val.textContent = c; svg.appendChild(val);
+    }
+    if(i%2===0){
+      const lbl = el('text',{x:x+barW/2, y:H-10, 'text-anchor':'middle', 'font-size':8.5, 'font-family':'IBM Plex Mono', fill:'var(--text-muted)'});
+      lbl.textContent = `${i*10}`; svg.appendChild(lbl);
+    }
+  });
+}
+
+/* índice médio por mesorregião — agrupamento oficial do IBGE (Sertão, São Francisco,
+   Agreste, Mata, Metropolitana de Recife), só entre os municípios com índice calculável. */
+function desenharIndiceMesorregiao(svg, data, idx){
+  clear(svg);
+  const W=420,H=200,padL=150,padR=50,padT=8,padB=8;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  const porRegiao = new Map();
+  data.forEach((m,i)=>{
+    const r = m.mesorregiao || 'Sem mesorregião';
+    if(!porRegiao.has(r)) porRegiao.set(r, []);
+    porRegiao.get(r).push(idx[i]);
+  });
+  const linhas = [...porRegiao.entries()]
+    .map(([nome,vals])=>({nome, media: vals.reduce((a,b)=>a+b,0)/vals.length, n: vals.length}))
+    .sort((a,b)=>b.media-a.media);
+  if(!linhas.length){
+    svg.appendChild(svgTexto('Sem índice calculável neste ano.', W, H));
+    return;
+  }
+  const rowH = (H-padT-padB)/linhas.length;
+  const maxVal = Math.max(...linhas.map(l=>l.media))*1.15 || 1;
+  linhas.forEach((l,i)=>{
+    const y = padT + i*rowH + rowH*0.2;
+    const barH = rowH*0.6;
+    const w = (l.media/maxVal)*(W-padL-padR);
+    svg.appendChild(el('rect',{x:padL, y, width:Math.max(w,1), height:barH, rx:5, fill:'var(--bordo)'}));
+    const lbl = el('text',{x:padL-8, y:y+barH/2+4, 'text-anchor':'end', 'font-size':10.5, 'font-family':'IBM Plex Sans', fill:'var(--text)'});
+    lbl.textContent = l.nome.replace(' Pernambucano','').replace(' Pernambucana',''); svg.appendChild(lbl);
+    const val = el('text',{x:padL+w+8, y:y+barH/2+4, 'font-size':10, 'font-family':'IBM Plex Mono', fill:'var(--text-muted)'});
+    val.textContent = `${fmt(l.media,1)} (${l.n})`; svg.appendChild(val);
+  });
+}
+
+/* matriz de correlação: Spearman ρ entre cada déficit de saneamento e cada indicador de
+   saúde — a correlação em "Município em foco" só mostra um par por vez (o selecionado
+   nos campos ali); esta matriz dá o quadro completo dos 9 pares de uma vez. Fundo
+   divergente (terracota = correlação positiva/esperada pela literatura, verde =
+   negativa/inesperada) mas o valor com sinal sempre aparece em texto — a cor nunca
+   carrega sozinha o significado. */
+function renderMatrizCorrelacao(host, dataAno){
+  const corDeCorrelacao = (rho) => {
+    const a = Math.min(Math.abs(rho), 0.7)/0.7;
+    return rho >= 0
+      ? `color-mix(in srgb, var(--terracota) ${Math.round(a*55)}%, var(--surface))`
+      : `color-mix(in srgb, var(--verde) ${Math.round(a*55)}%, var(--surface))`;
+  };
+  let html = `<div class="table-scroll"><table class="tabela-relatorio matriz-correlacao"><thead><tr><th></th>`;
+  INDICADORES_SAUDE.forEach(s => html += `<th>${LABELS[s]}</th>`);
+  html += `</tr></thead><tbody>`;
+  INDICADORES_DEFICIT.forEach(d=>{
+    html += `<tr><th>${LABELS[d]}</th>`;
+    INDICADORES_SAUDE.forEach(s=>{
+      const completos = comDadosCompletos(dataAno, [d,s]);
+      if(completos.length < 4){
+        html += `<td class="celula-correlacao" style="background:var(--surface-alt)" title="Dados insuficientes (${completos.length} município(s), mínimo 4)">insuf.</td>`;
+      } else {
+        const rho = spearman(completos.map(m=>m[d]), completos.map(m=>m[s]));
+        html += `<td class="celula-correlacao" style="background:${corDeCorrelacao(rho)}" title="${completos.length} municípios">${(rho>=0?'+':'')}${rho.toFixed(2)}</td>`;
+      }
+    });
+    html += `</tr>`;
+  });
+  html += `</tbody></table></div>`;
+  host.innerHTML = html;
 }
 
 /* ============ RENDER: RELATÓRIOS ============

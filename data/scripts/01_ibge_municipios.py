@@ -8,10 +8,16 @@ Fontes oficiais, sem chave de API necessária:
     9324) — série anual de população por município:
     https://sidra.ibge.gov.br/tabela/6579
 
+A própria API de Localidades já retorna a mesorregião oficial do IBGE de
+cada município (`microrregiao.mesorregiao`) — não é uma chamada extra, só
+não estava sendo extraída da resposta que o pipeline já baixa. Usada pelo
+front-end para agrupar/comparar municípios por região (Agreste, Sertão,
+Mata, São Francisco, Metropolitana de Recife).
+
 Gera:
   data/raw/ibge/municipios_<uf>.json        (resposta crua da API de localidades)
   data/raw/ibge/populacao_<uf>.json         (resposta crua da API SIDRA)
-  data/processed/municipios_pe.csv          (código IBGE, nome, população por ano)
+  data/processed/municipios_pe.csv          (código IBGE, nome, mesorregião, população por ano)
 
 A série do SIDRA tem lacunas nos anos de Censo (ex.: 2022) — nesses anos o
 IBGE não publica estimativa nesta tabela. As lacunas dentro do intervalo
@@ -66,6 +72,10 @@ def baixar_populacao() -> dict:
 
 def montar_tabela(municipios: list[dict], populacao_payload: dict) -> pd.DataFrame:
     nomes = {m["id"]: m["nome"] for m in municipios}
+    mesorregioes = {
+        m["id"]: (m["microrregiao"]["mesorregiao"]["id"], m["microrregiao"]["mesorregiao"]["nome"])
+        for m in municipios
+    }
 
     series_por_municipio = {}
     for resultado in populacao_payload[0]["resultados"][0]["series"]:
@@ -75,6 +85,7 @@ def montar_tabela(municipios: list[dict], populacao_payload: dict) -> pd.DataFra
     linhas = []
     for cod, nome in nomes.items():
         serie = series_por_municipio.get(cod, {})
+        mesorregiao_id, mesorregiao_nome = mesorregioes[cod]
         for ano in range(ANO_INICIO, ANO_FIM + 1):
             valor = serie.get(ano)
             populacao = None
@@ -83,7 +94,10 @@ def montar_tabela(municipios: list[dict], populacao_payload: dict) -> pd.DataFra
                     populacao = int(valor)
                 except (TypeError, ValueError):
                     populacao = None
-            linhas.append({"codigo_ibge": cod, "municipio": nome, "ano": ano, "populacao": populacao})
+            linhas.append({
+                "codigo_ibge": cod, "municipio": nome, "ano": ano, "populacao": populacao,
+                "mesorregiao_id": mesorregiao_id, "mesorregiao": mesorregiao_nome,
+            })
 
     df = pd.DataFrame(linhas).sort_values(["codigo_ibge", "ano"])
 

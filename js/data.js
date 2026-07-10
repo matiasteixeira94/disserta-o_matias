@@ -59,7 +59,7 @@ function getDataset(ano){
   return PAINEL.municipios
     .filter(m => String(m.ano) === String(ano))
     .map(m => ({
-      codigo: m.codigo_ibge, nome: m.municipio, uf: m.uf, pop: m.populacao,
+      codigo: m.codigo_ibge, nome: m.municipio, uf: m.uf, pop: m.populacao, mesorregiao: m.mesorregiao,
       deficitAgua: m.deficitAgua, deficitEsgoto: m.deficitEsgoto, deficitResiduos: m.deficitResiduos,
       taxaDengue: m.taxaDengue, taxaChikungunya: m.taxaChikungunya, taxaDiarreia: m.taxaDiarreia,
     }))
