@@ -466,23 +466,33 @@ function renderDashboard(){
     }
   }
 
+  /* linha do ranking (com ou sem índice calculável) — clicar seleciona o município em
+     todo o painel, igual à busca do topo da página. Extraído porque as duas listas
+     abaixo (com índice / sem índice) tinham o mesmo HTML e o mesmo clique copiados. */
+  function criarLinhaRanking({municipio, isSel, posLabel, valLabel, barPercent, semIndiceCalc, extra}){
+    const row = document.createElement('div');
+    row.className = 'rank-item' + (semIndiceCalc ? ' rank-item-sem-indice' : '') + (isSel ? ' rank-item-selecionado' : '');
+    row.innerHTML = `
+      <span class="rank-pos">${posLabel}</span>
+      <span class="rank-name"><strong>${municipio.nome}</strong><span>${municipio.uf} · ${fmt(municipio.pop)} hab.${extra ? ' · '+extra : ''}${isSel ? ' · <strong>selecionado no topo da página</strong>' : ''}</span></span>
+      <span class="rank-bar-wrap">${barPercent!==null ? `<span class="rank-bar" style="width:${barPercent}%"></span>` : ''}</span>
+      <span class="rank-value">${valLabel}</span>`;
+    row.style.cursor = 'pointer';
+    row.addEventListener('click', ()=>{ state.municipioIdx = dataAno.indexOf(municipio); renderDashboard(); });
+    if(isSel && row.scrollIntoView) row.scrollIntoView({block:'nearest'});
+    return row;
+  }
+
   rankHost.innerHTML = "";
   const maxVal = ordered[0].val || 1;
   let visiveis = 0;
   ordered.forEach((o,i)=>{
     if(!municipioPassaFiltro(o.m, o.val)) return;
     visiveis++;
-    const isSel = o.m === municipioSel;
-    const row = document.createElement('div'); row.className = 'rank-item' + (isSel ? ' rank-item-selecionado' : '');
-    row.innerHTML = `
-      <span class="rank-pos">${i+1}º</span>
-      <span class="rank-name"><strong>${o.m.nome}</strong><span>${o.m.uf} · ${fmt(o.m.pop)} hab.${isSel ? ' · <strong>selecionado no topo da página</strong>' : ''}</span></span>
-      <span class="rank-bar-wrap"><span class="rank-bar" style="width:${(o.val/maxVal*100).toFixed(0)}%"></span></span>
-      <span class="rank-value">${fmt(o.val,1)}</span>`;
-    row.style.cursor = 'pointer';
-    row.addEventListener('click', ()=>{ state.municipioIdx = dataAno.indexOf(o.m); renderDashboard(); });
-    rankHost.appendChild(row);
-    if(isSel && row.scrollIntoView) row.scrollIntoView({block:'nearest'});
+    rankHost.appendChild(criarLinhaRanking({
+      municipio: o.m, isSel: o.m === municipioSel,
+      posLabel: `${i+1}º`, valLabel: fmt(o.val,1), barPercent: (o.val/maxVal*100).toFixed(0),
+    }));
   });
 
   /* municípios sem os 5 indicadores completos: aparecem também na lista (todos os 185
@@ -496,18 +506,11 @@ function renderDashboard(){
     rankHost.appendChild(divisor);
   }
   semIndice.forEach(m=>{
-    const isSel = m === municipioSel;
     const faltando = INDICADORES_INDICE.find(k => m[k]===null || m[k]===undefined);
-    const row = document.createElement('div'); row.className = 'rank-item rank-item-sem-indice' + (isSel ? ' rank-item-selecionado' : '');
-    row.innerHTML = `
-      <span class="rank-pos">—</span>
-      <span class="rank-name"><strong>${m.nome}</strong><span>${m.uf} · ${fmt(m.pop)} hab. · falta ${LABELS[faltando]}${isSel ? ' · <strong>selecionado no topo da página</strong>' : ''}</span></span>
-      <span class="rank-bar-wrap"></span>
-      <span class="rank-value">—</span>`;
-    row.style.cursor = 'pointer';
-    row.addEventListener('click', ()=>{ state.municipioIdx = dataAno.indexOf(m); renderDashboard(); });
-    rankHost.appendChild(row);
-    if(isSel && row.scrollIntoView) row.scrollIntoView({block:'nearest'});
+    rankHost.appendChild(criarLinhaRanking({
+      municipio: m, isSel: m === municipioSel, semIndiceCalc: true,
+      posLabel: '—', valLabel: '—', barPercent: null, extra: `falta ${LABELS[faltando]}`,
+    }));
   });
   if(filtroRanking && visiveis===0 && !semIndice.length){
     const vazio = document.createElement('div');

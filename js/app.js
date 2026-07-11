@@ -55,6 +55,11 @@ btnTheme.addEventListener('click', ()=>{
     if(id==='selAno'){
       state.ano = e.target.value;
       popularSelectMunicipios(getDataset(state.ano));
+      /* um filtro por faixa de índice (0-10, 10-20...) é específico ao ano — a escala do
+         índice muda de ano pra ano, então uma faixa "correta" no ano anterior pode não
+         corresponder a nada no novo (o filtro por mesorregião continua válido, região
+         não muda com o ano). */
+      if(filtroRanking && filtroRanking.tipo === 'faixa') filtroRanking = null;
     }
     if(id==='selIndicador') state.indicador = e.target.value;
     if(id==='selComponente') state.componente = e.target.value;
@@ -161,6 +166,8 @@ function mostrarErroCarregamento(erro){
 }
 
 async function iniciar(){
+  const heroErro = document.getElementById('heroErro');
+  heroErro.innerHTML = `<p class="hero-carregando"><span class="spinner" aria-hidden="true"></span> Carregando dados oficiais (IBGE, SINAN/SIH-SUS, SINISA/SNIS)...</p>`;
   try{
     await carregarPainel();
   } catch(erro){
@@ -175,5 +182,6 @@ async function iniciar(){
   await carregarPontosAtencao(); // opcional — sem arquivo/pontos ainda não é erro, ver js/geo.js
   popularSelectAnos();
   popularSelectMunicipios(getDataset(state.ano));
+  heroErro.innerHTML = '';
 }
 iniciar();
