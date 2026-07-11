@@ -15,6 +15,38 @@
   <div class="overlay" id="overlay"></div>
   <datalist id="dlMunicipiosPE"></datalist>
 
+  <div class="modal-overlay" id="modalPontoOverlay" hidden>
+    <div class="modal-ponto" role="dialog" aria-modal="true" aria-labelledby="modalPontoTitulo">
+      <h2 id="modalPontoTitulo">Novo ponto de atenção</h2>
+      <p class="hint" id="modalPontoLocal" style="display:block; margin-bottom:14px"></p>
+      <div class="field" style="margin-bottom:12px">
+        <label for="inputPontoEndereco">Endereço / local</label>
+        <input type="text" id="inputPontoEndereco" placeholder="Ex.: Rua das Flores, 123 - Centro">
+      </div>
+      <div class="field" style="margin-bottom:12px">
+        <label for="selPontoCategoria">Categoria</label>
+        <select id="selPontoCategoria">
+          <option value="agua">Água</option>
+          <option value="esgoto">Esgoto</option>
+          <option value="residuos">Resíduos</option>
+          <option value="outro">Outro</option>
+        </select>
+      </div>
+      <div class="field" style="margin-bottom:12px">
+        <label for="inputPontoDescricao">Descrição da necessidade de obra</label>
+        <textarea id="inputPontoDescricao" rows="3" placeholder="Ex.: vazamento constante na rede de distribuição"></textarea>
+      </div>
+      <div class="field" style="margin-bottom:16px">
+        <label for="inputPontoFonte">Fonte (quem registrou e quando)</label>
+        <input type="text" id="inputPontoFonte">
+      </div>
+      <div class="actions-row">
+        <button class="btn-export" id="btnPontoCancelar" type="button">Cancelar</button>
+        <button class="btn-export btn-export-primary" id="btnPontoSalvar" type="button">Salvar ponto</button>
+      </div>
+    </div>
+  </div>
+
   <aside class="sidebar" id="sidebar">
     <div class="brand">
       <img src="assets/images/logo-ppgecam.png" alt="Logo PPGECAM">

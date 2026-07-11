@@ -123,6 +123,31 @@ document.getElementById('btnBaixarPontos').addEventListener('click', ()=>{
   baixarBlob(new Blob([json], {type:'application/json;charset=utf-8'}), 'pontos_atencao.json');
 });
 
+/* modal do formulário de novo ponto de atenção (substitui os prompt() encadeados) */
+function fecharModalPonto(){
+  document.getElementById('modalPontoOverlay').hidden = true;
+  pontoPendente = null;
+}
+document.getElementById('btnPontoCancelar').addEventListener('click', fecharModalPonto);
+document.getElementById('modalPontoOverlay').addEventListener('click', (e)=>{
+  if(e.target.id === 'modalPontoOverlay') fecharModalPonto(); // clicar fora do card fecha, como o menu mobile
+});
+document.getElementById('btnPontoSalvar').addEventListener('click', ()=>{
+  if(!pontoPendente) return;
+  const endereco = document.getElementById('inputPontoEndereco').value.trim();
+  if(!endereco){ document.getElementById('inputPontoEndereco').focus(); return; }
+  PONTOS_ATENCAO.push({
+    ...pontoPendente,
+    endereco,
+    categoria: document.getElementById('selPontoCategoria').value,
+    descricao: document.getElementById('inputPontoDescricao').value.trim(),
+    fonte: document.getElementById('inputPontoFonte').value.trim(),
+  });
+  fecharModalPonto();
+  renderMapaGeo();
+  document.getElementById('btnBaixarPontos').style.display = '';
+});
+
 /* ============ FILTROS — COMPARAÇÕES ============ */
 document.getElementById('selCompA').addEventListener('change', (e)=>{
   const data = getDataset(state.ano);

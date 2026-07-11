@@ -127,6 +127,23 @@ html[data-theme="dark"] .sidebar{ background:#180208; }
 .overlay{ display:none; position:fixed; inset:0; background:rgba(36,20,26,.45); z-index:15; }
 .overlay.show{ display:block; }
 
+/* ============ MODAL — NOVO PONTO DE ATENÇÃO ============ */
+.modal-overlay{
+  position:fixed; inset:0; background:rgba(36,20,26,.55); z-index:40;
+  display:flex; align-items:center; justify-content:center; padding:20px;
+}
+.modal-overlay[hidden]{ display:none; }
+.modal-ponto{
+  background:var(--surface); border-radius:var(--radius); box-shadow:var(--shadow);
+  padding:24px; width:100%; max-width:440px; max-height:90vh; overflow-y:auto;
+}
+.modal-ponto h2{ font-size:16px; font-weight:600; margin-bottom:6px; }
+.modal-ponto .field{ display:flex; flex-direction:column; gap:6px; }
+.modal-ponto input[type="text"], .modal-ponto select, .modal-ponto textarea{
+  background:var(--surface-alt); border:1px solid var(--border); border-radius:8px; padding:9px 10px;
+  color:var(--text); font-family:var(--font-body); font-size:14px; resize:vertical;
+}
+
 .view{ display:none; padding:26px 28px 60px; max-width:1280px; }
 .view.active{ display:block; }
 #view-inicio{ max-width:none; } /* a Tela Inicial não segue a largura de leitura das telas de dado — a logo pode ocupar quase a tela toda */

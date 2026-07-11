@@ -328,10 +328,11 @@ function coordenadasSvg(svg, evt){
   return {x:p.x, y:p.y};
 }
 
-/* modo curadoria: clicar no mapa pede endereço/categoria/descrição/fonte por prompt()
-   (simples, mas suficiente pra um uso interno da equipe de pesquisa) e adiciona o ponto
-   só nesta sessão do navegador — precisa baixar o JSON e substituir o arquivo no
-   repositório pra o ponto aparecer pra quem mais visitar o site depois. */
+/* modo curadoria: clicar no mapa abre um formulário (endereço/categoria/descrição/fonte)
+   em vez de encadear prompt()s — adiciona o ponto só nesta sessão do navegador; precisa
+   baixar o JSON e substituir o arquivo no repositório pra o ponto aparecer pra quem mais
+   visitar o site depois. */
+let pontoPendente = null; // {codigo_ibge, lat, lon} do clique atual, enquanto o modal está aberto
 function adicionarPontoAtencaoNoClique(svg, e){
   if(!mapaProjecaoAtual) return;
   const pos = coordenadasSvg(svg, e);
@@ -345,22 +346,19 @@ function adicionarPontoAtencaoNoClique(svg, e){
   const codigo = path ? Number(path.dataset.codigo) : null;
   const municipio = codigo!==null ? getDataset(state.ano).find(m=>m.codigo===codigo) : null;
 
-  const endereco = prompt(`Endereço/local do ponto de atenção${municipio ? ' em '+municipio.nome+'-'+municipio.uf : ''}:`);
-  if(!endereco) return;
-  const categoria = (prompt('Categoria (digite exatamente): agua, esgoto, residuos ou outro', 'agua') || 'outro').trim().toLowerCase();
-  const descricao = prompt('Descrição curta da necessidade de obra:', '') || '';
-  const fonte = prompt('Fonte (quem registrou e quando):', `curadoria manual, ${new Date().toISOString().slice(0,10)}`) || '';
+  pontoPendente = { codigo_ibge: codigo, lat: Math.round(lat*1e5)/1e5, lon: Math.round(lon*1e5)/1e5 };
+  abrirModalPonto(municipio);
+}
 
-  PONTOS_ATENCAO.push({
-    codigo_ibge: codigo,
-    endereco,
-    lat: Math.round(lat*1e5)/1e5,
-    lon: Math.round(lon*1e5)/1e5,
-    categoria: ['agua','esgoto','residuos'].includes(categoria) ? categoria : 'outro',
-    descricao,
-    fonte,
-  });
-  renderMapaGeo();
-  const btnBaixar = document.getElementById('btnBaixarPontos');
-  if(btnBaixar) btnBaixar.style.display = '';
+function abrirModalPonto(municipio){
+  const overlay = document.getElementById('modalPontoOverlay');
+  document.getElementById('modalPontoLocal').textContent = municipio
+    ? `Local clicado: ${municipio.nome}-${municipio.uf} (lat ${pontoPendente.lat}, lon ${pontoPendente.lon})`
+    : `Local clicado: lat ${pontoPendente.lat}, lon ${pontoPendente.lon} (fora de qualquer município detectado)`;
+  document.getElementById('inputPontoEndereco').value = '';
+  document.getElementById('selPontoCategoria').value = 'agua';
+  document.getElementById('inputPontoDescricao').value = '';
+  document.getElementById('inputPontoFonte').value = `curadoria manual, ${new Date().toISOString().slice(0,10)}`;
+  overlay.hidden = false;
+  document.getElementById('inputPontoEndereco').focus();
 }
