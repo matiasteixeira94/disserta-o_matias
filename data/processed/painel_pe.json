@@ -8,7 +8,7 @@
     "saneamento": "SINISA/SNIS (Ministério das Cidades) — importação manual, ver data/scripts/04_sinisa_saneamento.py",
     "investimento": "SNIS via Base dos Dados (basedosdados.br_mdr_snis) — investimento total em água+esgoto por entidade executora (prestador/município/estado), 2015-2022, ver data/scripts/04d_snis_investimento.py"
   },
-  "geradoEm": "2026-07-12T23:36:04.548401+00:00",
+  "geradoEm": "2026-07-12T23:54:01.853668+00:00",
   "municipios": [
     {
       "codigo_ibge": 2600054,
