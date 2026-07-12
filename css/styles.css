@@ -40,7 +40,11 @@ html[data-theme="dark"]{
 }
 
 *,*::before,*::after{ box-sizing:border-box; }
-html,body{ height:100%; }
+/* rede de segurança contra overflow horizontal — sem height:100%, que travava o scroll vertical
+   (overflow-x diferente de visible força overflow-y a virar auto por spec; com altura fixa em
+   100%, o body virava um scroller interno de 844px e o scroll da página real parava de funcionar). */
+html{ overflow-x:hidden; }
+body{ overflow-x:hidden; }
 body{
   margin:0; background:var(--bg); color:var(--text);
   font-family:var(--font-body); font-size:15px; line-height:1.5;
@@ -190,6 +194,7 @@ html[data-theme="dark"] .sidebar{ background:#180208; }
 @media (prefers-reduced-motion: reduce){ .spinner{ animation:none; } }
 @media (max-width: 780px){
   .topbar{ flex-wrap:wrap; row-gap:10px; }
+  .topbar-title .badge-proto{ display:none; } /* texto nowrap comprido — na largura do celular, estourava a página pros lados */
   .topbar-filtros{ width:100%; }
   .field-compacto{ flex:1; }
   .hero-inicio{ padding:22px 10px 20px; gap:16px; }
