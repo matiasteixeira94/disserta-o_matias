@@ -4,14 +4,14 @@ function renderCurrentView(){
   if(currentView==='dashboard') renderDashboard(); // já inclui o mapa geográfico (renderMapaGeo) e "Município em foco" (renderInicio)
   if(currentView==='relatorios') renderRelatorios();
   if(currentView==='comparacoes') renderComparacoes();
-  // 'inicio' é só a tela de abertura (institucional + logo + navegação), sem conteúdo dinâmico
+  // 'inicio' e 'apresentacao' são conteúdo estático (institucional / texto explicativo), sem render dinâmico
 }
 function setView(view){
   currentView = view;
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.getElementById('view-'+view).classList.add('active');
   document.querySelectorAll('.nav-item, .hero-nav-btn').forEach(b=>b.classList.toggle('active', b.dataset.view===view));
-  const titles = {inicio:'Tela Inicial', dashboard:'Dashboard', relatorios:'Relatórios', comparacoes:'Comparações'};
+  const titles = {inicio:'Tela Inicial', apresentacao:'Apresentação', dashboard:'Dashboard', relatorios:'Relatórios', comparacoes:'Comparações'};
   document.getElementById('pageTitle').textContent = titles[view] || '';
   closeMobileMenu();
   renderCurrentView();

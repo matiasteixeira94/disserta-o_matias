@@ -61,6 +61,10 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v9h14v-9"/></svg>
         Tela Inicial
       </button>
+      <button class="nav-item" data-view="apresentacao">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v6"/><circle cx="12" cy="7.4" r="0.6" fill="currentColor" stroke="none"/></svg>
+        Apresentação
+      </button>
       <button class="nav-item" data-view="dashboard">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="5" rx="1.5"/><rect x="13" y="10" width="8" height="11" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/></svg>
         Dashboard
@@ -119,6 +123,10 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v9h14v-9"/></svg>
             Tela Inicial
           </button>
+          <button class="hero-nav-btn" data-view="apresentacao">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v6"/><circle cx="12" cy="7.4" r="0.6" fill="currentColor" stroke="none"/></svg>
+            Apresentação
+          </button>
           <button class="hero-nav-btn" data-view="dashboard">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="5" rx="1.5"/><rect x="13" y="10" width="8" height="11" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/></svg>
             Dashboard
@@ -135,6 +143,88 @@
         <p class="hero-autor">Autor: Alisson Matias Teixeira</p>
       </div>
       <div class="hero-erro" id="heroErro"></div>
+    </section>
+
+    <!-- ===================== APRESENTAÇÃO ===================== -->
+    <section id="view-apresentacao" class="view">
+      <p class="scope-note">O SaneData é um painel público e gratuito que junta, num só lugar, o
+        déficit de saneamento básico e a carga de doenças de veiculação hídrica/ambiental dos 185
+        municípios de Pernambuco — pensado para gestores, técnicos e pesquisadores que precisam
+        decidir onde investir primeiro.</p>
+
+      <div class="secao-divisor"><h2>O que é o SaneData</h2></div>
+      <div class="panel panel-wide">
+        <p>Hoje, dados de saneamento (água, esgoto, resíduos) e de saúde pública (dengue,
+          chikungunya, diarreia aguda) vivem em bases federais separadas — IBGE, DATASUS, SINISA —,
+          cada uma com seu formato e seu ciclo de atualização. O SaneData junta essas fontes,
+          município a município, ano a ano, num único índice de priorização comparável entre os
+          185 municípios de PE.</p>
+        <p><strong>Regra de transparência do painel:</strong> nenhum número aqui é estimado ou
+          inventado. Quando uma fonte oficial ainda não apurou um indicador para um município/ano,
+          o painel mostra "sem dado" — nunca um zero, uma média ou uma interpolação silenciosa.</p>
+      </div>
+
+      <div class="cards-row">
+        <div class="card accent-bordo">
+          <span class="card-label">Fontes</span>
+          <span class="card-value" style="font-size:19px">100% oficiais</span>
+          <span class="card-sub">IBGE, DATASUS (SINAN/SIH) e Ministério das Cidades (SNIS/SINISA)</span>
+        </div>
+        <div class="card accent-terracota">
+          <span class="card-label">Cobertura</span>
+          <span class="card-value">185</span>
+          <span class="card-sub">municípios de Pernambuco, 2015-2024</span>
+        </div>
+        <div class="card accent-ambar">
+          <span class="card-label">Dado ausente</span>
+          <span class="card-value" style="font-size:19px">Nunca inventado</span>
+          <span class="card-sub">"sem dado" é sempre explícito, nunca um valor estimado</span>
+        </div>
+        <div class="card accent-verde">
+          <span class="card-label">Acesso</span>
+          <span class="card-value" style="font-size:19px">Livre e gratuito</span>
+          <span class="card-sub">funciona no navegador, sem instalar nada, inclusive no celular</span>
+        </div>
+      </div>
+
+      <div class="secao-divisor"><h2>Como o índice de priorização é calculado <span class="hint">resumo — não é a metodologia completa</span></h2></div>
+      <div class="panel panel-wide">
+        <p>O índice combina <strong>cinco indicadores</strong> — déficit de água, déficit de
+          esgoto, taxa de dengue, taxa de chikungunya e taxa de diarreia aguda — numa única nota de
+          0 a 100: quanto maior, mais o município precisa de investimento.</p>
+        <p>O déficit de resíduos sólidos ainda não entra nessa conta: ele só tem dado a partir de
+          2023, e incluí-lo quebraria a comparação do índice entre os anos da série. Ele continua
+          visível no mapa (camada "Investimento") e na tela de Comparações, só não soma pontos no
+          índice.</p>
+        <p>Por padrão, os cinco indicadores têm peso igual (20% cada). O Dashboard também oferece
+          dois esquemas alternativos, calculados automaticamente a partir dos próprios dados — peso
+          pela variação entre municípios (entropia) e peso por análise estatística (PCA) —, para
+          quem quiser testar se o ranking se mantém estável sob outros critérios de ponderação.</p>
+      </div>
+
+      <div class="secao-divisor"><h2>Como usar o painel</h2></div>
+      <div class="panel panel-wide">
+        <p>No topo da página, os filtros de <strong>Município</strong> e <strong>Ano</strong> valem
+          para o painel inteiro — troque o ano para ver outra safra de dados, ou digite o nome de
+          um município para acompanhá-lo em todas as telas.</p>
+        <p><strong>Dashboard</strong> é a tela principal: ranking de priorização clicável, mapa
+          geográfico por camada (índice, cada déficit, cada indicador de saúde, ou cobertura de
+          investimento), decomposição do índice do município selecionado, distribuição do índice,
+          índice médio por mesorregião, matriz de correlação, e a seção "Município em foco" com a
+          evolução do índice ao longo dos anos.</p>
+        <p><strong>Relatórios</strong> traz a tabela completa dos 185 municípios do ano, com
+          exportação em CSV, Excel, imagem e impressão/PDF.</p>
+        <p><strong>Comparações</strong> coloca dois municípios lado a lado, indicador por
+          indicador, com a média do painel como referência.</p>
+      </div>
+
+      <div class="secao-divisor"><h2>Fontes e limitações</h2></div>
+      <p class="scope-note">População e mesorregiões vêm do IBGE; dengue e chikungunya, do SINAN;
+        diarreia aguda (proxy: internações por doença infecciosa intestinal), do SIH-SUS; e déficit
+        de água e esgoto, do antigo SNIS (até 2022) e do SINISA (a partir de 2023, ano-base mais
+        recente publicado pelo Ministério das Cidades até o momento). Nem todo município tem todos
+        os indicadores apurados em todo ano — o esgoto, em especial, ainda tem cobertura parcial em
+        qualquer fonte disponível — e o painel deixa isso visível em vez de disfarçar a lacuna.</p>
     </section>
 
     <!-- ===================== DASHBOARD ===================== -->
