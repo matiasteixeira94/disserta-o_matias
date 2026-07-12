@@ -23,6 +23,8 @@ python 02_sinan_saude.py         # dengue e chikungunya (SINAN/DATASUS)
 python 03_sih_diarreia.py        # internações por diarreia aguda (SIH-SUS)
 python 04_sinisa_saneamento.py   # déficit de saneamento (SINISA/SNIS) — passo manual, ver abaixo
 python 04a_sinisa_basedosdados.py --billing-project SEU_PROJETO_GCP  # água/esgoto 2015-2022, automatizado — ver abaixo
+python 04b_sinisa_dashboard_publico.py                    # água 2023+, automatizado — ver abaixo
+python 04c_sinisa_dashboard_publico_esgoto_residuos.py    # esgoto e resíduos 2023+, automatizado — ver abaixo
 python 05_build_painel.py        # junta tudo em data/processed/painel_pe.json
 python 06_ibge_malha_municipios.py  # polígonos dos municípios, para o mapa
 ```
@@ -199,6 +201,44 @@ Verificado antes de escrever o script (não presumido):
 Não precisa de nenhuma credencial. Faz merge com
 `data/processed/saneamento_pe.csv` do mesmo jeito que o 04a (só preenche
 `deficitAgua` onde ainda está nulo).
+
+### 04c — Esgoto e resíduos via o mesmo Painel público do SINISA — automatizado
+Quando o 04b foi escrito (2026-07-08), o módulo `esgoto` só publicava um
+indicador (`IES0001`) que o 04b decidiu não importar por parecer referido a
+uma base populacional diferente da do 04a, e o módulo `residuos_solidos`
+estava desabilitado ("Módulos disponíveis em breve"). Reverificado em
+2026-07-11 (não presumido): os dois módulos passaram a publicar dado real
+para PE:
+- **`IES0001`** ("Atendimento da população total com rede coletora de
+  esgoto") é, na verdade, referido à população **total** — a mesma base do
+  `IAG0001` (água) já importado pelo 04b. A ressalva do 04b era sobre a
+  diferença entre `IES0001` e o indicador de esgoto do 04a
+  (`indice_coleta_esgoto`, referido à população atendida com água) — ou
+  seja, o salto de metodologia é entre a fonte antiga (SNIS/04a, até 2022)
+  e a nova (SINISA/04c, 2023 em diante), o mesmo tipo de salto institucional
+  já documentado para água entre 04a e 04b.
+- **`IRS0001`** ("Cobertura da população total com coleta de resíduos
+  sólidos domiciliares") é exatamente o indicador que o passo manual 04 já
+  esperava para `deficitResiduos` ("taxa de cobertura do serviço de coleta
+  domiciliar"). Antes deste script, `deficitResiduos` não tinha **nenhuma**
+  fonte preenchida em nenhum ano — sempre `null`. A partir de 2023 (o único
+  ano-base publicado neste portal), passa a ter dado real para 143 dos 185
+  municípios de PE.
+- Assim como o 04b, o portal serve um único snapshot fixo — o parâmetro
+  `?ano=` não muda o retorno (testado com 2023 e 2024, resultado idêntico).
+  **Não há como obter 2024 ou 2025 por aqui**: o próximo ciclo do SINISA
+  ainda não foi publicado neste portal (verificado em 2026-07-11; repita
+  esta checagem quando for atualizar o painel de novo).
+
+Faz merge com `data/processed/saneamento_pe.csv` do mesmo jeito que o 04a/04b
+(só preenche `deficitEsgoto`/`deficitResiduos` onde ainda estão nulos).
+
+`deficitResiduos` continua fora de `INDICADORES_INDICE` (`js/data.js`) — o
+índice de priorização composto exige os 5 indicadores em todos os anos da
+série para ser comparável ao longo do tempo, e resíduos só existe a partir
+de 2023. O dado aparece mesmo assim na camada "Investimento" do mapa
+geográfico e na tabela comparativa de Comparações, do jeito que o resto do
+painel já mostra "sem dado" quando um indicador não está disponível.
 
 ### 05 — Junção final
 Junta as quatro fontes por `(codigo_ibge, ano)`, calcula as taxas de saúde
