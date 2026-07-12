@@ -35,8 +35,22 @@ function popularDatalistMunicipios(data){
     dl.appendChild(opt);
   });
 }
+/* remove acento e caixa — quem digita "petrolina" ou "Petrolina" sem o "— PE" que o
+   datalist sugere não devia cair num "não encontrado" silencioso. */
+function normalizarBusca(s){
+  return s.normalize('NFD').replace(/[̀-ͯ]/g,'').trim().toLowerCase();
+}
 function encontrarMunicipioPorRotulo(data, rotulo){
-  return data.find(m => rotuloMunicipio(m) === rotulo) || null;
+  const exato = data.find(m => rotuloMunicipio(m) === rotulo);
+  if(exato) return exato;
+  const alvo = normalizarBusca(rotulo);
+  if(!alvo) return null;
+  // aceita o nome sem o "— PE" (ex.: "petrolina", com ou sem acento/maiúscula)
+  const porNomeExato = data.find(m => normalizarBusca(m.nome) === alvo);
+  if(porNomeExato) return porNomeExato;
+  // só resolve por prefixo quando é inequívoco — nunca adivinha entre vários candidatos
+  const porPrefixo = data.filter(m => normalizarBusca(m.nome).startsWith(alvo));
+  return porPrefixo.length === 1 ? porPrefixo[0] : null;
 }
 
 /* ============ SELEÇÃO DE MUNICÍPIO NO TOPO DA PÁGINA (depende do ano, refeito a cada troca) ============ */
@@ -45,7 +59,7 @@ function popularSelectMunicipios(data){
   const input = document.getElementById('selMunicipio');
   const idx = Math.min(Math.max(state.municipioIdx || 0, 0), data.length-1);
   state.municipioIdx = idx;
-  if(input && data[idx]) input.value = rotuloMunicipio(data[idx]);
+  if(input && data[idx]){ input.value = rotuloMunicipio(data[idx]); input.classList.remove('campo-invalido'); }
 }
 
 /* linha do tempo do índice de priorização (pesos iguais) do município selecionado
@@ -883,7 +897,7 @@ function popularSelectComparacao(data){
     if(idx===undefined || idx===null) idx = cfg.fallback;
     idx = Math.max(0, Math.min(idx, data.length-1));
     state[cfg.key] = idx;
-    if(input && data[idx]) input.value = rotuloMunicipio(data[idx]);
+    if(input && data[idx]){ input.value = rotuloMunicipio(data[idx]); input.classList.remove('campo-invalido'); }
   });
 }
 

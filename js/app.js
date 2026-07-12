@@ -67,20 +67,39 @@ btnTheme.addEventListener('click', ()=>{
   });
 });
 
-/* ============ BUSCA DE MUNICÍPIO (global, no topo da página) ============
-   Campo de texto + datalist (em vez de <select>) para dar busca por nome entre
-   os 185 municípios — digitar filtra as sugestões do navegador; só um rótulo
-   que bate exatamente com um município (escolhido da lista ou digitado por
-   completo) muda o estado, senão o campo volta pro último município válido. */
-document.getElementById('selMunicipio').addEventListener('change', (e)=>{
-  const data = getDataset(state.ano);
-  const m = encontrarMunicipioPorRotulo(data, e.target.value);
-  if(m){
-    state.municipioIdx = data.indexOf(m);
-    renderCurrentView();
-  } else {
-    e.target.value = data[state.municipioIdx] ? rotuloMunicipio(data[state.municipioIdx]) : '';
-  }
+/* ============ BUSCA DE MUNICÍPIO (input + datalist compartilhado) ============
+   Campo de texto (em vez de <select>) para buscar por nome entre os 185
+   municípios. Antes, só um rótulo idêntico ao gerado pelo datalist ("Nome — PE")
+   mudava o estado — quem digitava só o nome (sem "— PE"), com acento diferente
+   ou letra maiúscula/minúscula trocada, tinha a busca ignorada em silêncio: o
+   campo voltava pro município anterior sem nenhum aviso, então os dados do
+   painel continuavam sendo de outro município sem o usuário perceber o motivo.
+   Agora: (1) encontrarMunicipioPorRotulo aceita nome sem sufixo/acento/caixa e
+   prefixo inequívoco (ver js/render.js); (2) quando mesmo assim não encontra
+   nada, o campo fica com contorno de alerta e NÃO apaga o que foi digitado —
+   dá pra ver que a busca não "pegou" em vez de só continuar mostrando o
+   município antigo como se nada tivesse acontecido. */
+function ligarBuscaMunicipio(input, aoEncontrar){
+  const marcarInvalido = (invalido) => input.classList.toggle('campo-invalido', invalido);
+  input.addEventListener('input', ()=>{
+    const data = getDataset(state.ano);
+    marcarInvalido(!encontrarMunicipioPorRotulo(data, input.value));
+  });
+  input.addEventListener('change', ()=>{
+    const data = getDataset(state.ano);
+    const m = encontrarMunicipioPorRotulo(data, input.value);
+    if(m){
+      marcarInvalido(false);
+      aoEncontrar(m, data);
+    } else {
+      marcarInvalido(true); // mantém o texto digitado — não revert silencioso
+    }
+  });
+}
+
+ligarBuscaMunicipio(document.getElementById('selMunicipio'), (m, data)=>{
+  state.municipioIdx = data.indexOf(m);
+  renderCurrentView();
 });
 
 /* ============ FILTROS — DASHBOARD ============ */
@@ -149,17 +168,13 @@ document.getElementById('btnPontoSalvar').addEventListener('click', ()=>{
 });
 
 /* ============ FILTROS — COMPARAÇÕES ============ */
-document.getElementById('selCompA').addEventListener('change', (e)=>{
-  const data = getDataset(state.ano);
-  const m = encontrarMunicipioPorRotulo(data, e.target.value);
-  if(m){ state.compA = data.indexOf(m); renderComparacoes(); }
-  else e.target.value = data[state.compA] ? rotuloMunicipio(data[state.compA]) : '';
+ligarBuscaMunicipio(document.getElementById('selCompA'), (m, data)=>{
+  state.compA = data.indexOf(m);
+  renderComparacoes();
 });
-document.getElementById('selCompB').addEventListener('change', (e)=>{
-  const data = getDataset(state.ano);
-  const m = encontrarMunicipioPorRotulo(data, e.target.value);
-  if(m){ state.compB = data.indexOf(m); renderComparacoes(); }
-  else e.target.value = data[state.compB] ? rotuloMunicipio(data[state.compB]) : '';
+ligarBuscaMunicipio(document.getElementById('selCompB'), (m, data)=>{
+  state.compB = data.indexOf(m);
+  renderComparacoes();
 });
 
 /* ============ EXPORTAÇÃO — RELATÓRIOS ============ */

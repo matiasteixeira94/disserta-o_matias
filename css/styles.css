@@ -215,6 +215,7 @@ html[data-theme="dark"] .sidebar{ background:#180208; }
   color:var(--text); min-width:180px; font-family:var(--font-body); font-size:14px;
 }
 .field input[list]:focus{ outline:none; border-color:var(--bordo-claro); }
+.field input[list].campo-invalido{ border-color:var(--terracota); background:color-mix(in srgb, var(--terracota) 8%, var(--surface-alt)); }
 .field input[list]::-webkit-calendar-picker-indicator{ opacity:.6; cursor:pointer; }
 .pills{ display:flex; gap:8px; flex-wrap:wrap; }
 .pill{
