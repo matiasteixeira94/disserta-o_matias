@@ -16,9 +16,17 @@ const TODOS_INDICADORES   = [...INDICADORES_DEFICIT, ...INDICADORES_SAUDE]; // t
    real, basta devolvê-lo a esta lista. */
 const INDICADORES_INDICE  = ["deficitAgua","deficitEsgoto", ...INDICADORES_SAUDE];
 
+/* taxas de investimento em saneamento (R$ por 100 mil habitantes), por entidade executora
+   (prestador/município/estado) — ver data/scripts/04d_snis_investimento.py. Deliberadamente
+   fora de INDICADORES_DEFICIT/INDICADORES_INDICE/TODOS_INDICADORES: são valores monetários,
+   não uma taxa 0-100%, então misturá-los quebraria a escala de cor do mapa e o índice
+   composto de priorização. Só água+esgoto, só 2015-2022 (mesma cobertura do 04a). */
+const INDICADORES_INVESTIMENTO = ["investimentoPrestadorPer100k","investimentoMunicipioPer100k","investimentoEstadoPer100k"];
+
 const LABELS = {
   deficitAgua:"Déficit de água", deficitEsgoto:"Déficit de esgoto", deficitResiduos:"Déficit de resíduos",
-  taxaDengue:"Dengue", taxaChikungunya:"Chikungunya", taxaDiarreia:"Diarreia aguda"
+  taxaDengue:"Dengue", taxaChikungunya:"Chikungunya", taxaDiarreia:"Diarreia aguda",
+  investimentoPrestadorPer100k:"Investimento — prestador", investimentoMunicipioPer100k:"Investimento — município", investimentoEstadoPer100k:"Investimento — estado"
 };
 const LABEL_PESO = { igual:"pesos iguais", entropia:"entropia de Shannon", pca:"PCA (1º componente)" };
 
@@ -69,6 +77,7 @@ function getDataset(ano){
       codigo: m.codigo_ibge, nome: m.municipio, uf: m.uf, pop: m.populacao, mesorregiao: m.mesorregiao,
       deficitAgua: m.deficitAgua, deficitEsgoto: m.deficitEsgoto, deficitResiduos: m.deficitResiduos,
       taxaDengue: m.taxaDengue, taxaChikungunya: m.taxaChikungunya, taxaDiarreia: m.taxaDiarreia,
+      investimentoPrestadorPer100k: m.investimentoPrestadorPer100k, investimentoMunicipioPer100k: m.investimentoMunicipioPer100k, investimentoEstadoPer100k: m.investimentoEstadoPer100k,
     }))
     .sort((a,b) => a.nome.localeCompare(b.nome, 'pt-BR'));
   _cacheDataset.set(chave, resultado);

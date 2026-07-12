@@ -10,11 +10,12 @@ Painel interativo para priorização de investimentos em saneamento e saúde pú
 - **Apresentação** — o que é o SaneData, como o índice de priorização é
   calculado (resumo) e como usar cada tela do painel.
 - **Dashboard** — índice de priorização (ranking clicável, mapa geográfico
-  por camada, decomposição, distribuição, índice por mesorregião, matriz
-  de correlação, pontos de atenção com modo curadoria) e "Município em
-  foco" (evolução temporal, comparação com a média, correlação/dispersão).
-- **Relatórios** — ranking completo do ano com exportação em CSV, Excel,
-  imagem e impressão/PDF.
+  por camada, decomposição, distribuição, índice por mesorregião,
+  investimento em saneamento por mesorregião, matriz de correlação, pontos
+  de atenção com modo curadoria) e "Município em foco" (evolução temporal,
+  comparação com a média, correlação/dispersão).
+- **Relatórios** — ranking completo do ano com investimento em saneamento
+  por mesorregião e exportação em CSV, Excel, imagem e impressão/PDF.
 - **Comparações** — dois municípios lado a lado.
 
 ## Estrutura

@@ -25,6 +25,7 @@ python 04_sinisa_saneamento.py   # déficit de saneamento (SINISA/SNIS) — pass
 python 04a_sinisa_basedosdados.py --billing-project SEU_PROJETO_GCP  # água/esgoto 2015-2022, automatizado — ver abaixo
 python 04b_sinisa_dashboard_publico.py                    # água 2023+, automatizado — ver abaixo
 python 04c_sinisa_dashboard_publico_esgoto_residuos.py    # esgoto e resíduos 2023+, automatizado — ver abaixo
+python 04d_snis_investimento.py  # investimento em água/esgoto 2015-2022, automatizado — ver abaixo
 python 05_build_painel.py        # junta tudo em data/processed/painel_pe.json
 python 06_ibge_malha_municipios.py  # polígonos dos municípios, para o mapa
 ```
@@ -239,6 +240,31 @@ série para ser comparável ao longo do tempo, e resíduos só existe a partir
 de 2023. O dado aparece mesmo assim na camada "Investimento" do mapa
 geográfico e na tabela comparativa de Comparações, do jeito que o resto do
 painel já mostra "sem dado" quando um indicador não está disponível.
+
+### 04d — Investimento em saneamento (SNIS financeiro) — automatizado, cobertura parcial
+Mesma tabela do 04a (`basedosdados.br_mdr_snis.municipio_agua_esgoto`), mas
+lendo as colunas financeiras em vez das de cobertura: investimento total
+realizado em água+esgoto, desagregado por entidade executora —
+`investimento_total_prestador` (FN033), `investimento_total_municipio`
+(FN048) e `investimento_total_estado` (FN058). Confirmado no `schema.yml` do
+repositório
+[`basedosdados/queries-basedosdados`](https://github.com/basedosdados/queries-basedosdados)
+antes de escrever o script (não presumido).
+
+Mesmas limitações do 04a, por ser a mesma fonte: só água+esgoto (não existe
+indicador financeiro de resíduos sólidos nesta tabela nem em nenhuma outra do
+dataset `br_mdr_snis`), só até 2022 (SNIS descontinuado, sem passo manual
+equivalente para preencher 2023-2024 de investimento). Valores em R$
+nominais, sem correção monetária — comparar anos diferentes sem deflacionar
+é uma limitação metodológica a documentar na tese, não algo que o script
+corrija.
+
+Mesmo requisito do 04a (`pip install basedosdados`, projeto Google Cloud via
+`--billing-project`/`BD_BILLING_PROJECT_ID`, passo pulado sem quebrar o
+pipeline se não configurado). Grava
+`data/processed/investimento_saneamento_pe.csv`
+(`codigo_ibge, ano, investimentoPrestador, investimentoMunicipio, investimentoEstado`),
+que o `05_build_painel.py` converte em taxa por 100 mil habitantes.
 
 ### 05 — Junção final
 Junta as quatro fontes por `(codigo_ibge, ano)`, calcula as taxas de saúde

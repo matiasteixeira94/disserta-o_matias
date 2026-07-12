@@ -52,6 +52,7 @@ def main():
     notificacoes = carregar_opcional("saude_notificacoes_pe.csv")
     internacoes = carregar_opcional("saude_internacoes_dda_pe.csv")
     saneamento = carregar_opcional("saneamento_pe.csv")
+    investimento = carregar_opcional("investimento_saneamento_pe.csv")
 
     if notificacoes is not None:
         pivot = notificacoes.pivot_table(
@@ -67,6 +68,9 @@ def main():
 
     if saneamento is not None:
         base = base.merge(saneamento, on=["codigo_ibge", "ano"], how="left")
+
+    if investimento is not None:
+        base = base.merge(investimento, on=["codigo_ibge", "ano"], how="left")
 
     # Em anos com cobertura completa da fonte, "sem notificação" é um zero
     # real (SINAN/SIH são censitários) — preenche só nesses anos, para não
@@ -87,10 +91,22 @@ def main():
     base["taxaChikungunya"] = taxa("taxaChikungunya") if "taxaChikungunya" in base.columns else taxa("__nada__")
     base["taxaDiarreia"] = taxa("casos_diarreia") if "casos_diarreia" in base.columns else taxa("__nada__")
 
+    # investimento em saneamento (R$) por 100 mil habitantes, por entidade executora
+    # (2 casas: são valores monetários, não contagens de caso como as taxas de saúde acima)
+    def taxa_investimento(col):
+        if col not in base.columns:
+            return pd.Series([None] * len(base))
+        return (base[col] / base["populacao"] * 100_000).round(2)
+
+    base["investimentoPrestadorPer100k"] = taxa_investimento("investimentoPrestador")
+    base["investimentoMunicipioPer100k"] = taxa_investimento("investimentoMunicipio")
+    base["investimentoEstadoPer100k"] = taxa_investimento("investimentoEstado")
+
     colunas_finais = [
         "codigo_ibge", "municipio", "ano", "populacao", "mesorregiao",
         "deficitAgua", "deficitEsgoto", "deficitResiduos",
         "taxaDengue", "taxaChikungunya", "taxaDiarreia",
+        "investimentoPrestadorPer100k", "investimentoMunicipioPer100k", "investimentoEstadoPer100k",
     ]
     for c in colunas_finais:
         if c not in base.columns:
@@ -109,6 +125,7 @@ def main():
             "populacao": "IBGE (API de Localidades + SIDRA, agregado 6579)",
             "saude": "DATASUS/SINAN (dengue, chikungunya) e SIH-SUS (internações por doenças infecciosas intestinais A00-A09, proxy de diarreia aguda)",
             "saneamento": "SINISA/SNIS (Ministério das Cidades) — importação manual, ver data/scripts/04_sinisa_saneamento.py",
+            "investimento": "SNIS via Base dos Dados (basedosdados.br_mdr_snis) — investimento total em água+esgoto por entidade executora (prestador/município/estado), 2015-2022, ver data/scripts/04d_snis_investimento.py",
         },
         "geradoEm": pd.Timestamp.utcnow().isoformat(),
         "municipios": registros,

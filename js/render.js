@@ -405,6 +405,11 @@ function renderDashboard(){
   const svgMesorregiao = document.getElementById('chartMesorregiao');
   const statPonderadoHost = document.getElementById('statPonderado');
 
+  /* independe do índice composto (usa dataAno inteiro, não o par água+esgoto+3 indicadores
+     de saúde do índice), por isso roda mesmo quando o índice de 5 indicadores ainda não
+     fecha para este ano — mesmo motivo de renderMatrizCorrelacao acima. */
+  desenharInvestimentoMesorregiao(document.getElementById('chartInvestimentoDashboard'), dataAno, document.getElementById('tabelaInvestimentoDashboard'));
+
   const avisoForaIndice = document.getElementById('avisoMunicipioForaIndice');
   if(dataAno.length === 0){
     clear2(cardsHost);
@@ -714,6 +719,75 @@ function desenharIndiceMesorregiao(svg, data, idx){
   });
 }
 
+/* investimento em saneamento (R$ por 100 mil habitantes) por mesorregião, 3 séries
+   (prestador/município/estado — ver INDICADORES_INVESTIMENTO em js/data.js). Só água+esgoto,
+   só 2015-2022 (mesma cobertura do 04a/04d) — anos fora desse intervalo caem no placeholder
+   "sem dado", igual aos outros gráficos desta seção.
+   Diferente de desenharHistograma/desenharIndiceMesorregiao (que só são chamadas uma vez cada
+   e por isso pegam o host da tabela via getElementById fixo), esta função é chamada duas vezes
+   (Dashboard e Relatórios) com hosts de tabela diferentes, então recebe `tabelaHost` como
+   parâmetro. */
+function desenharInvestimentoMesorregiao(svg, dataAno, tabelaHost){
+  clear(svg);
+  const completos = comDadosCompletos(dataAno, INDICADORES_INVESTIMENTO);
+  // painel-wide (largura total), diferente do gráfico de índice por mesorregião (grid-2, meia
+  // largura) — viewBox mais largo pra combinar com a proporção real do container (svg estica
+  // pra 100% da largura via `.panel svg{width:100%}` em css/styles.css; um viewBox estreito
+  // aqui deixaria o texto desproporcionalmente grande).
+  const W=900,H=230,padL=170,padR=70,padT=12,padB=12;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  if(!completos.length){
+    svg.appendChild(svgTexto('Sem dado de investimento neste ano.', W, H));
+    if(tabelaHost) tabelaHost.innerHTML = '';
+    return;
+  }
+
+  const SERIES = [
+    { chave:'investimentoPrestadorPer100k', label:'Prestador', cor:'var(--bordo)' },
+    { chave:'investimentoMunicipioPer100k', label:'Município', cor:'var(--verde)' },
+    { chave:'investimentoEstadoPer100k',    label:'Estado',    cor:'var(--ambar)' },
+  ];
+
+  const porRegiao = new Map();
+  completos.forEach(m=>{
+    const r = m.mesorregiao || 'Sem mesorregião';
+    if(!porRegiao.has(r)) porRegiao.set(r, []);
+    porRegiao.get(r).push(m);
+  });
+  const linhas = [...porRegiao.entries()]
+    .map(([nome,itens])=>({
+      nome,
+      n: itens.length,
+      medias: SERIES.map(s => itens.reduce((a,m)=>a+m[s.chave],0)/itens.length),
+    }))
+    .sort((a,b) => (b.medias[0]+b.medias[1]+b.medias[2]) - (a.medias[0]+a.medias[1]+a.medias[2]));
+
+  /* tabela equivalente ao gráfico — pra quem usa leitor de tela ou só prefere ler números */
+  if(tabelaHost){
+    tabelaHost.innerHTML = `<thead><tr><th>Mesorregião</th><th>Municípios</th>${SERIES.map(s=>`<th>${s.label} (R$/100 mil hab.)</th>`).join('')}</tr></thead><tbody>` +
+      linhas.map(l=>`<tr><td style="text-align:left; font-family:var(--font-body)">${l.nome}</td><td>${l.n}</td>${l.medias.map(v=>`<td>${fmt(v,2)}</td>`).join('')}</tr>`).join('') +
+      `</tbody>`;
+  }
+
+  const rowH = (H-padT-padB)/linhas.length;
+  const maxVal = Math.max(...linhas.flatMap(l=>l.medias))*1.15 || 1;
+  const barH = (rowH*0.7)/SERIES.length;
+  linhas.forEach((l,i)=>{
+    const yRegiao = padT + i*rowH;
+    SERIES.forEach((s,si)=>{
+      const y = yRegiao + rowH*0.15 + si*barH;
+      const w = (l.medias[si]/maxVal)*(W-padL-padR);
+      const barra = el('rect',{x:padL, y, width:Math.max(w,1), height:Math.max(barH-2,1), rx:3, fill:s.cor});
+      const title = document.createElementNS(svgNS,'title');
+      title.textContent = `${l.nome} — ${s.label}: R$ ${fmt(l.medias[si],2)} por 100 mil habitantes (média de ${l.n} município(s))`;
+      barra.appendChild(title);
+      svg.appendChild(barra);
+    });
+    const lbl = el('text',{x:padL-8, y:yRegiao+rowH/2+4, 'text-anchor':'end', 'font-size':10.5, 'font-family':'IBM Plex Sans', fill:'var(--text)'});
+    lbl.textContent = l.nome.replace(' Pernambucano','').replace(' Pernambucana',''); svg.appendChild(lbl);
+  });
+}
+
 /* matriz de correlação: Spearman ρ entre cada déficit de saneamento e cada indicador de
    saúde — a correlação em "Município em foco" só mostra um par por vez (o selecionado
    nos campos ali); esta matriz dá o quadro completo dos 9 pares de uma vez. Fundo
@@ -846,6 +920,10 @@ function renderRelatorios(){
   const tabelaHost = document.getElementById("tabelaRelatorio");
 
   const dataAno = getDataset(state.ano);
+
+  /* independe do índice composto — mesmo motivo do Dashboard (ver renderDashboard). */
+  desenharInvestimentoMesorregiao(document.getElementById('chartInvestimentoRelatorio'), dataAno, document.getElementById('tabelaInvestimentoRelatorio'));
+
   if(dataAno.length === 0){
     clear2(cardsHost);
     cardsHost.innerHTML = placeholderHTML("Sem dados para este ano", "Rode o pipeline em data/scripts/ (ver README) para gerar data/processed/painel_pe.json.");

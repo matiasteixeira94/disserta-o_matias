@@ -20,6 +20,13 @@ de novo para regenerar). Arquivos:
   só existem depois do passo manual de importação do SINISA (04) — até lá
   ficam `null`. Os dois scripts fazem merge entre si (nenhum sobrescreve o
   que o outro já preencheu).
+- `investimento_saneamento_pe.csv` — investimento total (R$ nominais) em
+  água+esgoto por município/ano, desagregado por entidade executora
+  (prestador/município/estado), vindo da Base dos Dados via BigQuery (04d,
+  automatizado). Mesma cobertura do 04a: só água+esgoto, só 2015-2022 — sem
+  passo manual equivalente para preencher o resto. O script 05 converte os
+  totais em taxa por 100 mil habitantes antes de gravar no `painel_pe.json`;
+  os valores absolutos em R$ só existem aqui.
 - **`painel_pe.json`** — junção final de tudo acima (05); é o único
   arquivo que o front-end (`js/data.js`) lê, via `fetch`. Campos ainda não
   apurados aparecem como `null`, nunca como um valor fictício.
