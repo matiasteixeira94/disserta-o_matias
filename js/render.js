@@ -719,16 +719,30 @@ function desenharIndiceMesorregiao(svg, data, idx){
   });
 }
 
+/* forma compacta pra rótulo em cima de uma coluna estreita — "R$ 121.538.046,26" não caberia
+   ali. O valor exato continua no tooltip (title do SVG) e na tabela alternativa, nunca só aqui. */
+function fmtMoedaCompacta(v){
+  if(v===null || v===undefined) return '';
+  const abs = Math.abs(v);
+  if(abs >= 1e6) return (v/1e6).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1}) + 'mi';
+  if(abs >= 1e3) return (v/1e3).toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0}) + 'mil';
+  return fmt(v,0);
+}
+
 /* investimento em saneamento (R$ por 100 mil habitantes) por município, 3 séries
    (prestador/município/estado — ver INDICADORES_INVESTIMENTO em js/data.js). Só água+esgoto,
    só 2015-2022 (mesma cobertura do 04a/04d; o portal público do SINISA que cobre 2023-2024 não
    publica nenhum indicador de investimento, só receita/despesa operacional — verificado, não
    presumido) — anos fora desse intervalo caem no placeholder "sem dado", igual aos outros
    gráficos desta seção.
+   Colunas verticais agrupadas (mesmo padrão de desenharBarrasAgrupadas, usado em Comparações),
+   com o valor de cada coluna em cima dela (texto rotacionado -90°, formato compacto — ver
+   fmtMoedaCompacta) e o nome do município no eixo X rotacionado -45° (nomes longos não caberiam
+   na horizontal com 15 grupos lado a lado).
    Ranking por município (não mesorregião) pra permitir análise no nível que a mesorregião
-   escondia — mesmo padrão do "Ranking de priorização" (desenharRankingBarras): mostra só os
-   top N no gráfico (altura dinâmica), mas a tabela alternativa lista todos os municípios com
-   dado completo, ordenados do maior pro menor investimento total.
+   escondia — mesmo padrão do "Ranking de priorização": mostra só os top N no gráfico, mas a
+   tabela alternativa lista todos os municípios com dado, ordenados do maior pro menor
+   investimento total.
    Diferente de desenharHistograma/desenharIndiceMesorregiao (que só são chamadas uma vez cada
    e por isso pegam o host da tabela via getElementById fixo), esta função é chamada duas vezes
    (Dashboard e Relatórios) com hosts de tabela diferentes, então recebe `tabelaHost` como
@@ -737,8 +751,13 @@ function desenharInvestimentoMunicipios(svg, dataAno, tabelaHost){
   clear(svg);
   const TOP_N = 15;
   // painel-wide (largura total) — svg estica pra 100% da largura via `.panel svg{width:100%}`
-  // em css/styles.css.
-  const W=900,padL=190,padR=70,padT=12,padB=12;
+  // em css/styles.css. padT/padB generosos: rótulo de valor (rotacionado, em cima) e nome do
+  // município (rotacionado -45°, embaixo) precisam de espaço vertical, não só horizontal.
+  // padL maior que padR: o rótulo do 1º grupo (ancorado no fim, rotacionado -45°) se estende
+  // bem à esquerda do próprio eixo X — sem essa margem, o nome do primeiro município corta na
+  // borda do SVG (grupos seguintes têm as barras anteriores como "espaço" pra esse mesmo efeito).
+  const W=900, H=460, padL=130, padR=24, padT=100, padB=150;
+  const plotW = W-padL-padR, plotH = H-padT-padB;
 
   const SERIES = [
     { chave:'investimentoPrestadorPer100k', label:'Prestador', cor:'var(--bordo)' },
@@ -779,27 +798,43 @@ function desenharInvestimentoMunicipios(svg, dataAno, tabelaHost){
   }
 
   const topLinhas = linhas.slice(0, TOP_N);
-  const rowH = 30, gapY = 6;
-  const H = padT + topLinhas.length*(rowH+gapY) + padB;
   svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
   const maxVal = Math.max(...topLinhas.flatMap(l=>l.valores.filter(v=>v!==null)))*1.15 || 1;
-  const barH = (rowH*0.8)/SERIES.length;
+
+  const barW=13, barGap=2;
+  const groupW = SERIES.length*barW + (SERIES.length-1)*barGap;
+  const totalGroups = topLinhas.length*groupW;
+  // sem piso mínimo aqui de propósito: com padL maior (pro rótulo do 1º grupo caber, ver acima)
+  // e até 15 grupos fixos, um piso alto podia empurrar os últimos grupos pra fora do viewBox.
+  const gapEntreGrupos = topLinhas.length>1 ? Math.max((plotW-totalGroups)/topLinhas.length, 0) : 0;
+  const axisY = padT + plotH;
+
+  svg.appendChild(el('line',{x1:padL, y1:axisY, x2:W-padR, y2:axisY, stroke:'var(--border)', 'stroke-width':1}));
+
+  let x = padL + gapEntreGrupos/2;
   topLinhas.forEach((l,i)=>{
-    const yMun = padT + i*(rowH+gapY);
-    if(i%2===1) svg.appendChild(el('rect',{x:0, y:yMun-gapY/2, width:W, height:rowH+gapY, fill:'var(--surface-alt)'}));
     SERIES.forEach((s,si)=>{
       const valor = l.valores[si];
-      if(valor===null || valor===undefined) return; // sem dado — não desenha barra nenhuma (não confundir com 0)
-      const y = yMun + si*barH;
-      const w = (valor/maxVal)*(W-padL-padR);
-      const barra = el('rect',{x:padL, y, width:Math.max(w,1), height:Math.max(barH-1.5,1), rx:2, fill:s.cor});
+      if(valor===null || valor===undefined) return; // sem dado — não desenha coluna nenhuma (não confundir com 0)
+      const h = Math.max((valor/maxVal)*plotH, 1);
+      const bx = x + si*(barW+barGap), by = axisY - h;
+      const barra = el('rect',{x:bx, y:by, width:barW, height:h, rx:2, fill:s.cor});
       const title = document.createElementNS(svgNS,'title');
       title.textContent = `${l.nome} — ${s.label}: R$ ${fmt(valor,2)} por 100 mil habitantes`;
       barra.appendChild(title);
       svg.appendChild(barra);
+
+      const cx = bx+barW/2, ty = by-4;
+      const val = el('text',{x:cx, y:ty, 'text-anchor':'start', 'font-size':9, 'font-family':'IBM Plex Mono', fill:'var(--text)', transform:`rotate(-90 ${cx} ${ty})`});
+      val.textContent = fmtMoedaCompacta(valor);
+      svg.appendChild(val);
     });
-    const lbl = el('text',{x:padL-8, y:yMun+rowH/2+4, 'text-anchor':'end', 'font-size':10.5, 'font-family':'IBM Plex Sans', fill:'var(--text)'});
-    lbl.textContent = `${i+1}º ${l.nome}`; svg.appendChild(lbl);
+
+    const cxGroup = x + groupW/2;
+    const lbl = el('text',{x:cxGroup, y:axisY+12, 'text-anchor':'end', 'font-size':9.5, 'font-family':'IBM Plex Sans', fill:'var(--text)', transform:`rotate(-45 ${cxGroup} ${axisY+12})`});
+    lbl.textContent = `${i+1}º ${l.nome}`;
+    svg.appendChild(lbl);
+    x += groupW + gapEntreGrupos;
   });
 }
 
