@@ -157,14 +157,8 @@ html[data-theme="dark"] .sidebar{ background:#180208; }
   display:flex; flex-direction:column; align-items:center; gap:22px;
   padding:36px 20px 30px; margin-bottom:26px;
 }
-.hero-institucional{ text-align:center; }
-.hero-institucional p{
-  font-size:12.5px; font-weight:700; text-transform:uppercase; letter-spacing:.06em;
-  color:var(--text); margin:0 0 6px;
-}
-.hero-institucional-destaque{ color:var(--bordo) !important; margin-bottom:0 !important; }
 .hero-logo-wrap{ max-width:100%; }
-.hero-logo{ display:block; width:min(1050px, 64vw); height:auto; }
+.hero-logo{ display:block; width:min(1250px, 76vw); height:auto; }
 .hero-nav{ display:flex; flex-wrap:wrap; justify-content:center; gap:10px; }
 .hero-autor{ margin-top:26px; font-size:12px; color:var(--text-muted); text-align:center; }
 .hero-nav-btn{
@@ -198,7 +192,6 @@ html[data-theme="dark"] .sidebar{ background:#180208; }
   .topbar-filtros{ width:100%; }
   .field-compacto{ flex:1; }
   .hero-inicio{ padding:22px 10px 20px; gap:16px; }
-  .hero-institucional p{ font-size:10.5px; }
   .hero-nav-btn{ padding:9px 14px; font-size:12.5px; }
 }
 
